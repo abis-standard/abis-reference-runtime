@@ -1,0 +1,17 @@
+{
+  "agent_id": "reference-agent-001",
+  "agent_type": "reference-agent",
+  "operation": "reserve",
+  "execution_class": "CONTROLLED_SIMULATOR",
+  "authorization_token": "ALLOW",
+  "correlation_id": "reference-first-run-001",
+  "input": {
+    "date": "2026-09-12",
+    "time": "20:00",
+    "party_size": 4,
+    "seating_type": "PRIVATE_ROOM",
+    "customer_reference": "TEST-CUST-REFERENCE-001",
+    "idempotency_key": "idem-reference-first-run-001",
+    "test_scenario": "NORMAL_SUCCESS"
+  }
+}

@@ -1,0 +1,14 @@
+[project]
+name = "abis-reference-runtime"
+version = "0.1.0-rc1"
+description = "ABIS Reference Runtime v0.1 — non-production developer preview (MOCK-ONLY)"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["runtime/src"]
