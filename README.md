@@ -1,103 +1,89 @@
 # ABIS Reference Runtime
 
-**Version:** 0.1.0-rc1 · **Developer Preview** · **MOCK-ONLY** · **NON-PRODUCTION**
+**Developer Preview — v0.1.0**
 
-ABIS Reference Runtime is a minimal, non-production reference implementation for exploring the ABIS Business Interaction model.
-
-It demonstrates the execution of a Business Interaction against a controlled reference business system, including persistent business-state mutation, native business result handling, idempotency, and execution evidence.
-
-**It does not implement normative ABIS Business Outcome evaluation.**
+Reference implementation for executing ABIS Business Interactions against a controlled reference business system.
 
 ---
 
 ## What this is
 
-- A **reference implementation** for ABIS Public v0.1 developer preview
-- A **localhost HTTP gateway** that accepts a restaurant reservation Business Interaction
+- An **executable reference implementation** of the ABIS Business Interaction flow
+- A **localhost HTTP gateway** for restaurant reservation interactions
 - An **ABIS Runtime Core** pipeline (authorization → execution → connector → trace)
-- A **Controlled Reservation Simulator** (JSON `state.json` persistence)
-- **Native Business Result** return and **execution trace** (`trace_reference`)
+- A **Controlled Reservation Simulator** with persistent `state.json`
+- **Native Business Result** return, **idempotency**, and **execution trace** (`trace_reference`)
 
 ## What this is not
 
-- **Not production-ready**
-- **No real booking**, payment, or customer data
-- **No certification** or conformance claim
-- **No normative ABIS Business Outcome evaluation**
-- **No official ABIS conformance result**
-- **No external SaaS** or paid services required
+- **Not production infrastructure**
+- **Not a real booking service** or payment system
+- **Not ABIS certification** or conformance determination
+- **Does not implement normative Business Outcome evaluation**
+- **No external SaaS**, database, or paid services required
 
-> **LEGACY_INTERNAL_NAME:** `GrokE2EService` — internal integration class name retained for minimal diff. **PUBLIC_SEMANTICS:** provider-neutral reference runtime service.
-
----
-
-## Normative boundary
-
-| Layer | NORMAL_SUCCESS example | Meaning |
-| --- | --- | --- |
-| **Native Business Result** | `CONFIRMED` | Business system native status from the controlled simulator |
-| **Runtime Core Outcome** | `NOT_EVALUATED` | Normative ABIS Outcome determination is **not implemented** in v0.1 |
-
-`CONFIRMED` does **not** mean ABIS Outcome Evaluation `SUCCESS`. These are separate concepts by design.
-
-### 日本語（要約）
-
-`native_result.external_status` の `CONFIRMED` は、参照用ビジネスシステムのネイティブ結果です。Runtime Core の `outcome_disposition` は v0.1 では `NOT_EVALUATED` のままです。normative な ABIS Business Outcome 評価は本パッケージに含まれません。
+> Some internal prototype-era class names remain in source code (for example, integration service classes). These names do not imply provider-specific behavior.
 
 ---
 
 ## Architecture
 
 ```text
-External Agent (curl / your client)
-      ↓ HTTP POST (localhost)
-External Demo Gateway
+External Agent
       ↓
-GrokE2EService (provider-neutral integration layer)
+External Demo Gateway
       ↓
 ExternalAgentAdapter
       ↓
 RuntimeCore
-      ↓ Authorization / Execution / Control Plane
+      ↓
+Authorization / Execution / Control Plane
+      ↓
 RestaurantSimulatorConnector
       ↓
-ReservationEngine (Controlled Reservation Simulator)
+Controlled Reservation Simulator
       ↓
-JsonFileStore → state.json
+ReservationEngine
+      ↓
+state.json
       ↓
 Native Business Result
       ↓
-FoundationTrace (trace_reference)
+FoundationTrace
       ↓
-HTTP JSON Response
+HTTP Response
 ```
 
 ---
 
 ## Requirements
 
-- **Python 3.9+** (stdlib only — no pip dependencies)
-- **macOS / Linux / Windows** with Python available
-- **Local bearer token** (you generate it — not included in this package)
+- **Python 3.9+**
+- **stdlib only** — no pip dependencies
+- **No external database**
+- **No external SaaS**
 
 ---
 
 ## Quick Start
 
-### 1. Enter the package directory
+### 1. Clone and enter the repository
 
 ```bash
+git clone https://github.com/abis-standard/abis-reference-runtime.git
 cd abis-reference-runtime
 ```
 
-### 2. Create a local gateway token
+### 2. Generate a local gateway token
 
 ```bash
-export ABIS_DEMO_GATEWAY_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+export ABIS_DEMO_GATEWAY_TOKEN="$(
+python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+)"
 export ABIS_GATEWAY_MODE=EXTERNAL_TEST
 ```
 
-### 3. Start the gateway (persistent state recommended)
+### 3. Start the gateway
 
 ```bash
 mkdir -p data
@@ -106,7 +92,7 @@ python3 scripts/external_demo_gateway.py --data-dir ./data --port 9080
 
 Leave this terminal running.
 
-### 4. Send your first Business Interaction
+### 4. Send a Business Interaction
 
 In a second terminal:
 
@@ -117,41 +103,17 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json | python3 -m json.tool
 ```
 
----
-
-## Inspect the Business State
-
-After a successful request:
+### 5. Inspect business state
 
 ```bash
 cat ./data/state.json | python3 -m json.tool
 ```
 
-You should see a new entry under `reservations` and an `idempotency` record.
-
----
-
-## Inspect the Response
-
-A successful `NORMAL_SUCCESS` response includes:
-
-| Field | Meaning |
-| --- | --- |
-| `transport_status` | `ACCEPTED` when the request passed gateway and runtime boundaries |
-| `correlation_id` | Trace correlation for this interaction |
-| `native_result` | Business system native result (`CONFIRMED` for NORMAL_SUCCESS) |
-| `outcome_disposition` | Runtime Core disposition — **`NOT_EVALUATED`** in v0.1 |
-| `trace_reference` | Execution trace from Runtime Core (`FoundationTrace`) |
-| `crs_native_result` | Full native result from the controlled simulator |
-| `reservation_id` | Synthetic reservation ID from the simulator |
-
-See `examples/restaurant_reserve_normal_response.json` for a sample (generated by clean-room E2E).
-
 ---
 
 ## Idempotency
 
-Resend the same request with the same `idempotency_key`:
+Resend the same request (same `idempotency_key`):
 
 ```bash
 curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
@@ -160,29 +122,32 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json
 ```
 
-The same `reservation_id` is returned and **no duplicate reservation** is created in `state.json`.
+The same `reservation_id` is returned. `state.json` retains **one** reservation.
 
 ---
 
-## Security Model
+## Result semantics
 
-- Gateway binds to **127.0.0.1** by default (localhost only)
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `native_result.external_status` | `CONFIRMED` | Controlled reference business system returned a confirmed native reservation result |
+| `outcome_disposition.disposition` | `NOT_EVALUATED` | Runtime does **not** perform normative ABIS Business Outcome evaluation |
+
+`CONFIRMED` does **not** mean ABIS Outcome Evaluation `SUCCESS`. These are separate layers.
+
+---
+
+## Security / Scope
+
+- **localhost-first** (gateway binds to `127.0.0.1` by default)
+- **synthetic data only** — no real PII or production credentials
+- **controlled simulator** — no real booking or payment
 - **Bearer authentication** required (`ABIS_DEMO_GATEWAY_TOKEN`)
-- **CONTROLLED_SIMULATOR** execution class only — `REAL_EXTERNAL` is denied
-- **No secrets** are committed in this package — generate your own token locally
-- **No real external business APIs** — controlled simulator only
+- **CONTROLLED_SIMULATOR** execution class only
 
 ---
 
-## Protocol Neutrality
-
-The agent contract accepts any `agent_type` string (e.g. `reference-agent`). Runtime Core does not embed provider-specific logic.
-
-Public v0.1 focuses on: **restaurant reservation · NORMAL_SUCCESS**.
-
----
-
-## Run Tests
+## Tests
 
 ```bash
 chmod +x scripts/run_tests.sh
@@ -198,29 +163,12 @@ PYTHONPATH=runtime/src:reference-business/controlled-reservation-simulator/src:.
 
 ---
 
-## Project Status
-
-| Item | Status |
-| --- | --- |
-| Reference Runtime v0.1 | **Release Candidate (local staging)** |
-| Production use | **Not supported** |
-| Public license | **Pending review** — see `LICENSE-REVIEW.md` |
-| Public GitHub | **Not published in this phase** |
-
----
-
-## ABIS Public v0.1
-
-This package is the executable companion to **ABIS Public v0.1** specification materials. It is a developer preview for hands-on exploration — not a normative conformance tool.
-
----
-
-## Contributing / Feedback
-
-This is a staged release candidate. Feedback on first-run experience, documentation clarity, and reference flow reproducibility is welcome through ABIS project channels.
-
----
-
 ## License
 
-See `LICENSE-REVIEW.md` — public license terms are pending review. Do not redistribute until approved.
+Apache-2.0 — see [LICENSE](LICENSE).
+
+---
+
+## Status
+
+**Developer Preview** — v0.1.0. Not for production use.

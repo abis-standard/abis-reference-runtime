@@ -41,4 +41,4 @@ __all__ = [
     "start_external_gateway",
 ]
 
-__version__ = "0.1.0-rc1"
+__version__ = "0.1.0"
