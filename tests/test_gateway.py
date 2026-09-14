@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,7 +16,6 @@ ensure_paths()
 from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from abis_grp_runtime.outcome_testbed.patterns import EVALUATION_MATCH, PATTERN_EXACT_MATCH  # noqa: E402
 from crs.engine import ReservationEngine  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-reference-do-not-commit"
@@ -97,17 +95,26 @@ class TestGatewaySecurity(GatewayTestCase):
 
 
 class TestGatewayNormalSuccess(GatewayTestCase):
-    def test_normal_success_exact_match(self) -> None:
+    def test_normal_success_native_result(self) -> None:
         status, body = self._post("/v1/demo/restaurant/invoke", _normal_success_payload())
         self.assertEqual(status, 200)
         self.assertEqual(body["transport_status"], "ACCEPTED")
         self.assertEqual(body["correlation_id"], "gw-normal-success-001")
         self.assertEqual(body["native_result"]["external_status"], "CONFIRMED")
-        self.assertEqual(body["outcome_evaluation"]["evaluation"], EVALUATION_MATCH)
-        self.assertEqual(body["outcome_evaluation"]["pattern"], PATTERN_EXACT_MATCH)
         self.assertEqual(body["outcome_disposition"]["disposition"], "NOT_EVALUATED")
-        self.assertIn("evidence_trace", body)
         self.assertIsNotNone(body.get("reservation_id"))
+        self.assertNotIn("outcome_evaluation", body)
+        self.assertNotIn("evidence_trace", body)
+
+    def test_trace_reference_present(self) -> None:
+        status, body = self._post("/v1/demo/restaurant/invoke", _normal_success_payload())
+        self.assertEqual(status, 200)
+        trace = body.get("trace_reference") or {}
+        self.assertEqual(trace.get("correlation_id"), "gw-normal-success-001")
+        phases = [event.get("phase") for event in trace.get("events", [])]
+        self.assertIn("authorization", phases)
+        self.assertIn("native_result", phases)
+        self.assertIn("outcome_interpreter", phases)
 
     def test_state_json_mutated(self) -> None:
         self._post("/v1/demo/restaurant/invoke", _normal_success_payload())

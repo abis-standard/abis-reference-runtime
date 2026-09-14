@@ -10,7 +10,7 @@ from abis_grp_runtime.agent import (
 from abis_grp_runtime.connectors import RestaurantSimulatorConnector, SimulatorEgressFirewall
 from abis_grp_runtime.core import RuntimeCore, RuntimePipelineResult
 from abis_grp_runtime.context import RuntimeRequestContext
-from abis_grp_runtime.e2e import GrokE2EResponse, GrokE2EService, expected_state_from_request
+from abis_grp_runtime.e2e import GrokE2EResponse, GrokE2EService
 from abis_grp_runtime.gateway import (
     GatewayConfig,
     GatewayError,
@@ -19,12 +19,10 @@ from abis_grp_runtime.gateway import (
     start_external_gateway,
 )
 from abis_grp_runtime.native_result import NativeResultEnvelope
-from abis_grp_runtime.outcome_testbed import ExpectedState, OutcomeResultPatternTestbed
 
 __all__ = [
     "AgentRequestEnvelope",
     "AgentResponseEnvelope",
-    "ExpectedState",
     "ExternalAgentAdapter",
     "GatewayConfig",
     "GatewayError",
@@ -32,13 +30,11 @@ __all__ = [
     "GrokE2EResponse",
     "GrokE2EService",
     "NativeResultEnvelope",
-    "OutcomeResultPatternTestbed",
     "RestaurantSimulatorConnector",
     "RuntimeCore",
     "RuntimePipelineResult",
     "RuntimeRequestContext",
     "SimulatorEgressFirewall",
-    "expected_state_from_request",
     "gateway_public_base_url",
     "serialize_request",
     "serialize_response",

@@ -78,7 +78,7 @@ class TestRuntimePipeline(unittest.TestCase):
         result = core.process(ctx, _semantic_input(), _authorized())
         self.assertTrue(result.halted)
 
-    def test_evidence_trace_records_lifecycle(self) -> None:
+    def test_foundation_trace_records_lifecycle(self) -> None:
         core = RuntimeCore()
         ctx = RuntimeRequestContext.create(agent_id="agent-1", execution_class=ExecutionClass.NULL)
         result = core.process(ctx, _semantic_input(), _authorized())

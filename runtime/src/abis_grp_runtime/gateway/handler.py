@@ -172,8 +172,8 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
         body = result.to_dict()
         auth = body.get("authorization_disposition") or {}
         execution = body.get("execution_disposition") or {}
-        outcome = body.get("outcome_evaluation") or {}
         native = body.get("native_result") or {}
+        outcome = body.get("outcome_disposition") or {}
         append_evidence(
             self.config.evidence_log_path,
             {
@@ -184,8 +184,7 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
                 "authorization_disposition": auth.get("state"),
                 "execution_disposition": execution.get("execution_class"),
                 "native_status": native.get("external_status"),
-                "outcome_evaluation": outcome.get("evaluation"),
-                "mismatched_fields": outcome.get("mismatched_fields"),
+                "outcome_disposition": outcome.get("disposition"),
                 "http_status": 200 if body.get("transport_status") == "ACCEPTED" else 422,
                 "transport_status": body.get("transport_status"),
             },
