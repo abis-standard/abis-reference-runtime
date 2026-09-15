@@ -68,6 +68,7 @@ def main() -> None:
 
     print(f"ABIS Reference Runtime gateway listening on {base}")
     print(f"GET  {base}/v1/reference-profile")
+    print(f"POST {base}/v1/demo/restaurant/preflight")
     print(f"POST {base}/v1/demo/restaurant/invoke")
     print("GET  /health")
     print(f"ABIS_GATEWAY_MODE={config.mode}")

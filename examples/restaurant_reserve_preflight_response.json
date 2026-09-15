@@ -1,0 +1,15 @@
+{
+  "disclaimer": {
+    "business_outcome_prediction": false,
+    "certification": false,
+    "conformance_determination": false
+  },
+  "execution_class": "CONTROLLED_SIMULATOR",
+  "invocation": {
+    "method": "POST",
+    "path": "/v1/demo/restaurant/invoke"
+  },
+  "operation": "reserve",
+  "preflight_state": "PREFLIGHT_READY",
+  "vertical": "restaurant"
+}

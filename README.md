@@ -124,7 +124,21 @@ Example (abbreviated):
 
 See also: `examples/reference_runtime_profile.json`
 
-### 5. Send a Business Interaction
+### 5. Preflight the Interaction
+
+Before invoking, check whether the requested interaction is advertised by this Reference Runtime:
+
+```bash
+curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/preflight \
+  -H "Content-Type: application/json" \
+  -d @examples/restaurant_reserve_preflight.json | python3 -m json.tool
+```
+
+`PREFLIGHT_READY` means the requested `vertical` / `operation` / `execution_class` is present in the Reference Runtime Profile and may be attempted via invoke. It does **not** predict booking availability, business acceptance, execution success, or Business Outcome.
+
+Example response: `examples/restaurant_reserve_preflight_response.json`
+
+### 6. Send a Business Interaction
 
 In a second terminal:
 
@@ -135,7 +149,7 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json | python3 -m json.tool
 ```
 
-### 6. Inspect business state
+### 7. Inspect business state
 
 ```bash
 cat ./data/state.json | python3 -m json.tool

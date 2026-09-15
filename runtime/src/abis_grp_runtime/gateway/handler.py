@@ -15,6 +15,7 @@ from abis_grp_runtime.gateway.config import GatewayConfig
 from abis_grp_runtime.gateway.errors import GatewayError, GatewayErrorCode
 from abis_grp_runtime.gateway.evidence_log import append_evidence
 from abis_grp_runtime.gateway.rate_limit import RateLimitState
+from abis_grp_runtime.gateway.preflight import evaluate_preflight, parse_preflight_payload
 from abis_grp_runtime.gateway.reference_profile import (
     REFERENCE_PROFILE_PATH,
     build_health_response,
@@ -23,6 +24,7 @@ from abis_grp_runtime.gateway.reference_profile import (
 from abis_grp_runtime.gateway.validation import validate_payload
 
 INVOKE_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/invoke/?$")
+PREFLIGHT_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/preflight/?$")
 
 
 class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
@@ -85,6 +87,25 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
         self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "not found", http_status=404))
 
     def do_POST(self) -> None:
+        path = urlparse(self.path).path
+        if PREFLIGHT_PATH.match(path):
+            allowed, reason = self.rate_limit.allow(self._client_key)
+            if not allowed:
+                self._reject(
+                    GatewayError(
+                        GatewayErrorCode.RATE_LIMITED,
+                        "rate limit exceeded",
+                        http_status=429,
+                        detail={"reason": reason},
+                    )
+                )
+                return
+            try:
+                self._handle_preflight_post()
+            finally:
+                self.rate_limit.release(self._client_key)
+            return
+
         if not self._authenticate():
             return
 
@@ -101,11 +122,67 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            self._handle_post()
+            self._handle_invoke_post()
         finally:
             self.rate_limit.release(self._client_key)
 
-    def _handle_post(self) -> None:
+    def _read_json_body(self) -> tuple[dict[str, Any] | list[Any] | None, GatewayError | None]:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            return None, GatewayError(
+                GatewayErrorCode.REQUEST_INVALID,
+                "invalid Content-Length",
+                http_status=400,
+            )
+
+        if length > self.config.max_body_bytes:
+            return None, GatewayError(
+                GatewayErrorCode.REQUEST_INVALID,
+                "request body too large",
+                http_status=413,
+                detail={"max_bytes": self.config.max_body_bytes},
+            )
+
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except json.JSONDecodeError:
+            return None, GatewayError(
+                GatewayErrorCode.REQUEST_INVALID,
+                "invalid JSON",
+                http_status=400,
+            )
+        return payload, None
+
+    def _handle_preflight_post(self) -> None:
+        path = urlparse(self.path).path
+        match = PREFLIGHT_PATH.match(path)
+        if not match:
+            self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "unsupported route", http_status=404))
+            return
+
+        vertical = match.group("vertical")
+        payload, error = self._read_json_body()
+        if error:
+            self._reject(error)
+            return
+
+        parsed, invalid = parse_preflight_payload(payload, vertical=vertical)
+        if invalid is not None:
+            self._send_json(200, invalid)
+            return
+
+        assert parsed is not None
+        body = evaluate_preflight(
+            self.config,
+            vertical=vertical,
+            operation=parsed["operation"],
+            execution_class=parsed["execution_class"],
+        )
+        self._send_json(200, body)
+
+    def _handle_invoke_post(self) -> None:
         path = urlparse(self.path).path
         match = INVOKE_PATH.match(path)
         if not match:
@@ -113,33 +190,18 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
             return
 
         vertical = match.group("vertical")
-        try:
-            length = int(self.headers.get("Content-Length", "0"))
-        except ValueError:
-            self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "invalid Content-Length", http_status=400))
-            return
-
-        if length > self.config.max_body_bytes:
-            self._reject(
-                GatewayError(
-                    GatewayErrorCode.REQUEST_INVALID,
-                    "request body too large",
-                    http_status=413,
-                    detail={"max_bytes": self.config.max_body_bytes},
-                )
-            )
-            return
-
-        raw = self.rfile.read(length) if length else b"{}"
-        try:
-            payload = json.loads(raw.decode("utf-8"))
-        except json.JSONDecodeError:
-            self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "invalid JSON", http_status=400))
+        payload, error = self._read_json_body()
+        if error:
+            self._reject(error, correlation_id=None)
             return
 
         correlation_id = None
         if isinstance(payload, dict):
             correlation_id = str(payload.get("correlation_id") or "") or None
+
+        if not isinstance(payload, dict):
+            self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "JSON object required", http_status=400))
+            return
 
         normalized, error = validate_payload(payload, vertical=vertical)
         if error:
