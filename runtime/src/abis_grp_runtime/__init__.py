@@ -1,4 +1,4 @@
-"""ABIS Reference Runtime v0.1 — non-production reference implementation (MOCK-ONLY)."""
+"""ABIS Reference Runtime v0.2 — non-production reference implementation (MOCK-ONLY)."""
 
 from abis_grp_runtime.agent import (
     AgentRequestEnvelope,
@@ -15,6 +15,11 @@ from abis_grp_runtime.gateway import (
     GatewayConfig,
     GatewayError,
     GatewayErrorCode,
+    PROFILE_KIND,
+    PROFILE_VERSION,
+    REFERENCE_PROFILE_PATH,
+    build_health_response,
+    build_reference_runtime_profile,
     gateway_public_base_url,
     start_external_gateway,
 )
@@ -27,6 +32,9 @@ __all__ = [
     "GatewayConfig",
     "GatewayError",
     "GatewayErrorCode",
+    "PROFILE_KIND",
+    "PROFILE_VERSION",
+    "REFERENCE_PROFILE_PATH",
     "GrokE2EResponse",
     "GrokE2EService",
     "NativeResultEnvelope",
@@ -35,10 +43,12 @@ __all__ = [
     "RuntimePipelineResult",
     "RuntimeRequestContext",
     "SimulatorEgressFirewall",
+    "build_health_response",
+    "build_reference_runtime_profile",
     "gateway_public_base_url",
     "serialize_request",
     "serialize_response",
     "start_external_gateway",
 ]
 
-__version__ = "0.1.0"
+from abis_grp_runtime.version import __version__

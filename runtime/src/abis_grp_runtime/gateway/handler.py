@@ -15,6 +15,11 @@ from abis_grp_runtime.gateway.config import GatewayConfig
 from abis_grp_runtime.gateway.errors import GatewayError, GatewayErrorCode
 from abis_grp_runtime.gateway.evidence_log import append_evidence
 from abis_grp_runtime.gateway.rate_limit import RateLimitState
+from abis_grp_runtime.gateway.reference_profile import (
+    REFERENCE_PROFILE_PATH,
+    build_health_response,
+    build_reference_runtime_profile,
+)
 from abis_grp_runtime.gateway.validation import validate_payload
 
 INVOKE_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/invoke/?$")
@@ -25,7 +30,7 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
     config: GatewayConfig
     rate_limit: RateLimitState
 
-    server_version = "ABISDemoGateway/0.1"
+    server_version = "ABISDemoGateway/0.2"
 
     def log_message(self, format: str, *args: Any) -> None:
         if getattr(self.server, "quiet", False):  # type: ignore[attr-defined]
@@ -70,24 +75,12 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
         return True
 
     def do_GET(self) -> None:
-        path = urlparse(self.path).path
-        if path.rstrip("/") == "/health":
-            self._send_json(
-                200,
-                {
-                    "ok": True,
-                    "service": "abis-external-demo-gateway",
-                    "mode": self.config.mode,
-                    "bind": self.config.host,
-                    "verticals_enabled": ["restaurant"],
-                    "future_verticals_reserved": ["shopping", "dental", "government", "travel"],
-                    "operations_allowed": ["reserve"],
-                    "execution_class_allowed": ["CONTROLLED_SIMULATOR"],
-                    "real_execution": "PROHIBITED",
-                    "reference_runtime": "v0.1-rc1",
-                    "semantic_authority": "NONE",
-                },
-            )
+        path = urlparse(self.path).path.rstrip("/") or "/"
+        if path == "/health":
+            self._send_json(200, build_health_response(self.config))
+            return
+        if path == REFERENCE_PROFILE_PATH:
+            self._send_json(200, build_reference_runtime_profile(self.config))
             return
         self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "not found", http_status=404))
 

@@ -1,6 +1,6 @@
 # ABIS Reference Runtime
 
-**Developer Preview — v0.1.0**
+**Developer Preview — v0.2.0**
 
 Reference implementation for executing ABIS Business Interactions against a controlled reference business system.
 
@@ -92,7 +92,39 @@ python3 scripts/external_demo_gateway.py --data-dir ./data --port 9080
 
 Leave this terminal running.
 
-### 4. Send a Business Interaction
+### 4. Inspect the Reference Runtime Profile
+
+```bash
+curl -s http://127.0.0.1:9080/v1/reference-profile | python3 -m json.tool
+```
+
+The Reference Runtime Profile describes the execution surface advertised by this reference implementation. It is **not** an ABIS conformance statement, certification, trust assertion, or normative ABIS Capability definition.
+
+Example (abbreviated):
+
+```json
+{
+  "profile_kind": "abis-reference-runtime-profile",
+  "profile_version": 1,
+  "runtime": { "name": "abis-reference-runtime", "version": "0.2.0" },
+  "authority": { "semantic": "NONE", "normative": "NONE" },
+  "advertised_interactions": [
+    {
+      "vertical": "restaurant",
+      "operation": "reserve",
+      "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
+      "invocation": { "method": "POST", "path": "/v1/demo/restaurant/invoke" }
+    }
+  ],
+  "authorization": { "invoke": { "required": true, "scheme": "bearer" } },
+  "execution_boundary": { "real_execution": "PROHIBITED" },
+  "outcome_boundary": { "normative_business_outcome_evaluation": "NOT_IMPLEMENTED" }
+}
+```
+
+See also: `examples/reference_runtime_profile.json`
+
+### 5. Send a Business Interaction
 
 In a second terminal:
 
@@ -103,7 +135,7 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json | python3 -m json.tool
 ```
 
-### 5. Inspect business state
+### 6. Inspect business state
 
 ```bash
 cat ./data/state.json | python3 -m json.tool
@@ -171,4 +203,4 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Status
 
-**Developer Preview** — v0.1.0. Not for production use.
+**Developer Preview** — v0.2.0. Not for production use.

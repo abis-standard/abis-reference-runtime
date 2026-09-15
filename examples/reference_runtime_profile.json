@@ -1,0 +1,45 @@
+{
+  "advertised_interactions": [
+    {
+      "execution_classes_allowed": [
+        "CONTROLLED_SIMULATOR"
+      ],
+      "invocation": {
+        "method": "POST",
+        "path": "/v1/demo/restaurant/invoke"
+      },
+      "operation": "reserve",
+      "vertical": "restaurant"
+    }
+  ],
+  "authority": {
+    "normative": "NONE",
+    "semantic": "NONE"
+  },
+  "authorization": {
+    "invoke": {
+      "required": true,
+      "scheme": "bearer"
+    }
+  },
+  "business_system": {
+    "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE",
+    "identifier": "abis-demo-restaurant-simulator"
+  },
+  "execution_boundary": {
+    "real_execution": "PROHIBITED"
+  },
+  "health": {
+    "method": "GET",
+    "path": "/health"
+  },
+  "outcome_boundary": {
+    "normative_business_outcome_evaluation": "NOT_IMPLEMENTED"
+  },
+  "profile_kind": "abis-reference-runtime-profile",
+  "profile_version": 1,
+  "runtime": {
+    "name": "abis-reference-runtime",
+    "version": "0.2.0"
+  }
+}
