@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from abis_grp_runtime.gateway.config import GatewayConfig
-from abis_grp_runtime.gateway.reference_profile import build_reference_runtime_profile
+from abis_grp_runtime.gateway.execution_surface import find_advertised_interaction
 
 PREFLIGHT_READY = "PREFLIGHT_READY"
 PREFLIGHT_NOT_ADVERTISED = "PREFLIGHT_NOT_ADVERTISED"
@@ -86,14 +86,10 @@ def evaluate_preflight(
     operation: str,
     execution_class: str,
 ) -> dict[str, Any]:
-    """Evaluate against canonical ReferenceRuntimeProfile advertised_interactions."""
+    """Evaluate against canonical reference execution surface."""
+    _ = config  # reserved for future mode/bind-specific preflight fields
     vertical_norm = vertical.strip().lower()
-    profile = build_reference_runtime_profile(config)
-    matched = None
-    for item in profile["advertised_interactions"]:
-        if item["vertical"] == vertical_norm and item["operation"] == operation:
-            matched = item
-            break
+    matched = find_advertised_interaction(vertical_norm, operation)
 
     if matched is None:
         return {
@@ -104,7 +100,7 @@ def evaluate_preflight(
             "disclaimer": dict(PREFLIGHT_DISCLAIMER),
         }
 
-    if execution_class not in matched["execution_classes_allowed"]:
+    if execution_class not in matched.execution_classes_allowed:
         return {
             "preflight_state": PREFLIGHT_EXECUTION_DENIED,
             "vertical": vertical_norm,
@@ -118,6 +114,6 @@ def evaluate_preflight(
         "vertical": vertical_norm,
         "operation": operation,
         "execution_class": execution_class,
-        "invocation": dict(matched["invocation"]),
+        "invocation": matched.to_dict()["invocation"],
         "disclaimer": dict(PREFLIGHT_DISCLAIMER),
     }

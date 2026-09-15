@@ -8,12 +8,20 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 from urllib.error import HTTPError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from abis_grp_runtime.gateway.preflight import PREFLIGHT_READY
 from abis_grp_runtime.gateway.reference_profile import PROFILE_KIND
 
 ABSOLUTE_URL_PATTERN = re.compile(r"(?i)^(https?://|//|file://|ftp://)")
+INVOKE_PATH_PREFIX = "/v1/demo/"
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    """Fail closed on HTTP redirects — prevents open-redirect / SSRF pivots."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        raise HTTPError(req.full_url, code, msg, headers, fp)
 
 
 class ReferenceClientError(Exception):
@@ -89,6 +97,10 @@ class ReferenceAgentClient:
             raise ReferenceClientError("unsupported invoke method")
         if not path.startswith("/"):
             raise ReferenceClientError("invoke path must be relative")
+        if ".." in path or "\\" in path or "\x00" in path:
+            raise ReferenceClientError("invoke path traversal rejected")
+        if not path.startswith(INVOKE_PATH_PREFIX):
+            raise ReferenceClientError("invoke path outside gateway demo surface")
         if ABSOLUTE_URL_PATTERN.search(path):
             raise ReferenceClientError("absolute invoke URL rejected")
         parsed = urlparse(path)
@@ -176,8 +188,17 @@ class ReferenceAgentClient:
                 )
 
             response = self.invoke(invoke_path, invoke_payload)
+            if not isinstance(response, dict):
+                raise ReferenceClientError("invoke response must be a JSON object")
             native = response.get("native_result") or {}
+            if native and not isinstance(native, dict):
+                raise ReferenceClientError("malformed native_result in invoke response")
             outcome = response.get("outcome_disposition") or {}
+            if outcome and not isinstance(outcome, dict):
+                raise ReferenceClientError("malformed outcome_disposition in invoke response")
+            trace = response.get("trace_reference")
+            if trace is not None and not isinstance(trace, dict):
+                raise ReferenceClientError("malformed trace_reference in invoke response")
             return ReferenceClientResult(
                 profile_checked=profile_checked,
                 preflight_state=PREFLIGHT_READY,
@@ -185,7 +206,7 @@ class ReferenceAgentClient:
                 transport_status=str(response.get("transport_status") or "") or None,
                 native_external_status=native.get("external_status"),
                 outcome_disposition=outcome.get("disposition"),
-                trace_reference=dict(response.get("trace_reference") or {}),
+                trace_reference=dict(trace or {}),
                 reservation_id=response.get("reservation_id"),
                 profile=profile,
                 preflight=preflight,
@@ -211,7 +232,8 @@ class ReferenceAgentClient:
             )
 
     def _read_json(self, request: Request) -> dict[str, Any]:
-        with urlopen(request, timeout=self.config.timeout) as response:
+        opener = build_opener(_NoRedirectHandler())
+        with opener.open(request, timeout=self.config.timeout) as response:
             body = json.loads(response.read().decode("utf-8"))
         if not isinstance(body, dict):
             raise ReferenceClientError("expected JSON object response")

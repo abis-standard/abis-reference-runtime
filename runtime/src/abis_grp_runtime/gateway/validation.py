@@ -11,6 +11,7 @@ from abis_grp_runtime.gateway.config import (
     ALLOWED_VERTICALS_M206B,
 )
 from abis_grp_runtime.gateway.errors import GatewayError, GatewayErrorCode
+from abis_grp_runtime.gateway.execution_surface import is_advertised_invocation
 
 DANGEROUS_TOP_LEVEL_KEYS = frozenset(
     {
@@ -179,6 +180,21 @@ def validate_payload(data: Any, *, vertical: str) -> tuple[dict[str, Any] | None
             code,
             "execution_class not allowed",
             http_status=403 if code is GatewayErrorCode.EXECUTION_CLASS_DENIED else 400,
+            detail={"execution_class": execution_class, "allowed": sorted(ALLOWED_EXECUTION_CLASSES)},
+        )
+
+    if not is_advertised_invocation(vertical, operation, execution_class):
+        if operation not in ALLOWED_OPERATIONS:
+            return None, GatewayError(
+                GatewayErrorCode.OPERATION_DENIED,
+                "operation not allowed",
+                http_status=403,
+                detail={"operation": operation, "allowed": sorted(ALLOWED_OPERATIONS)},
+            )
+        return None, GatewayError(
+            GatewayErrorCode.EXECUTION_CLASS_DENIED,
+            "execution_class not allowed",
+            http_status=403,
             detail={"execution_class": execution_class, "allowed": sorted(ALLOWED_EXECUTION_CLASSES)},
         )
 

@@ -6,6 +6,20 @@ Reference implementation for executing ABIS Business Interactions against a cont
 
 ---
 
+## What's new in v0.2.0 (vs v0.1.0)
+
+| Area | v0.1.0 | v0.2.0 |
+| --- | --- | --- |
+| Runtime surface discovery | Manual curl / README | `GET /v1/reference-profile` (Reference Runtime Profile) |
+| Pre-invoke check | None | `POST /v1/demo/{vertical}/preflight` (Interaction Preflight) |
+| Agent-side flow | Manual steps | Reference Agent Client (Profile → Preflight → Invoke) |
+| Discover Runtime Surface | Not machine-readable | From a **known base URL** only — not Internet-wide discovery |
+| Public execution truth | Scattered gateway constants | Single `ReferenceExecutionSurface` drives Profile, Preflight, Invoke validation, and Health |
+
+**Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · no Internet-wide business discovery.
+
+---
+
 ## What this is
 
 - An **executable reference implementation** of the ABIS Business Interaction flow
@@ -29,7 +43,13 @@ Reference implementation for executing ABIS Business Interactions against a cont
 ## Architecture
 
 ```text
-External Agent
+Known Runtime Base URL
+      ↓
+GET /v1/reference-profile
+      ↓
+POST /v1/demo/{vertical}/preflight
+      ↓
+POST profile-advertised invoke path (Bearer)
       ↓
 External Demo Gateway
       ↓
@@ -53,6 +73,8 @@ FoundationTrace
       ↓
 HTTP Response
 ```
+
+The Reference Agent Client automates the Profile → Preflight → Invoke sequence. It does **not** discover ABIS businesses on the Internet.
 
 ---
 
@@ -232,6 +254,13 @@ Or:
 ```bash
 PYTHONPATH=runtime/src:reference-business/controlled-reservation-simulator/src:. \
   python3 -m unittest discover -s tests -v
+```
+
+Clean-room E2E (isolated temp data directory, synthetic token):
+
+```bash
+chmod +x scripts/clean_room_e2e.sh
+./scripts/clean_room_e2e.sh
 ```
 
 ---

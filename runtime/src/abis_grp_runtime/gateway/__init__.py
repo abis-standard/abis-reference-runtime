@@ -10,6 +10,12 @@ from abis_grp_runtime.gateway.preflight import (
     evaluate_preflight,
     parse_preflight_payload,
 )
+from abis_grp_runtime.gateway.execution_surface import (
+    advertised_interactions,
+    find_advertised_interaction,
+    is_advertised_invocation,
+    reference_execution_surface,
+)
 from abis_grp_runtime.gateway.reference_profile import (
     PROFILE_KIND,
     PROFILE_VERSION,
@@ -30,9 +36,14 @@ __all__ = [
     "PROFILE_KIND",
     "PROFILE_VERSION",
     "REFERENCE_PROFILE_PATH",
+    "advertised_interactions",
     "build_health_response",
     "build_reference_runtime_profile",
     "evaluate_preflight",
+    "find_advertised_interaction",
     "gateway_public_base_url",
+    "is_advertised_invocation",
+    "parse_preflight_payload",
+    "reference_execution_surface",
     "start_external_gateway",
 ]

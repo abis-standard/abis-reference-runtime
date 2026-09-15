@@ -6,10 +6,13 @@ import os
 from dataclasses import dataclass
 
 
+from abis_grp_runtime.gateway.execution_surface import (
+    ALLOWED_EXECUTION_CLASSES,
+    ALLOWED_OPERATIONS,
+    ALLOWED_VERTICALS_M206B,
+)
+
 ALLOWED_GATEWAY_MODES = frozenset({"EXTERNAL_TEST", "EXTERNAL_PRESENTATION"})
-ALLOWED_VERTICALS_M206B = frozenset({"restaurant"})
-ALLOWED_OPERATIONS = frozenset({"reserve"})
-ALLOWED_EXECUTION_CLASSES = frozenset({"CONTROLLED_SIMULATOR"})
 
 
 @dataclass(frozen=True)
