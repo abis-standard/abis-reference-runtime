@@ -1,0 +1,6 @@
+{
+  "vertical": "restaurant",
+  "operation": "reserve",
+  "execution_class": "CONTROLLED_SIMULATOR",
+  "invoke_payload_file": "examples/restaurant_reserve_normal.json"
+}

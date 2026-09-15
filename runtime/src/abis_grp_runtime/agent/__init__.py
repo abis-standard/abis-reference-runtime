@@ -8,6 +8,13 @@ from abis_grp_runtime.agent.envelope import (
     SUPPORTED_OPERATIONS,
 )
 from abis_grp_runtime.agent.errors import AgentContractErrorCode, AgentErrorEnvelope
+from abis_grp_runtime.agent.reference_client import (
+    ReferenceAgentClient,
+    ReferenceClientConfig,
+    ReferenceClientError,
+    ReferenceClientResult,
+    gateway_token_from_env,
+)
 from abis_grp_runtime.agent.serialization import (
     deserialize_request,
     deserialize_response,
@@ -25,9 +32,14 @@ __all__ = [
     "AgentRequestEnvelope",
     "AgentResponseEnvelope",
     "ExternalAgentAdapter",
+    "ReferenceAgentClient",
+    "ReferenceClientConfig",
+    "ReferenceClientError",
+    "ReferenceClientResult",
     "SUPPORTED_OPERATIONS",
     "deserialize_request",
     "deserialize_response",
+    "gateway_token_from_env",
     "request_from_dict",
     "request_to_dict",
     "serialize_request",

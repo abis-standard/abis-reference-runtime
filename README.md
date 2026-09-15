@@ -138,7 +138,34 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/preflight \
 
 Example response: `examples/restaurant_reserve_preflight_response.json`
 
-### 6. Send a Business Interaction
+### 6. Reference Agent Client (Discover Runtime Surface → Preflight → Invoke)
+
+This repository includes a **provider-neutral Reference Agent Client**. It does **not** perform Internet-wide business discovery. It starts from a **known Runtime base URL** and machine-reads the advertised interaction surface before attempting invocation.
+
+```bash
+export ABIS_DEMO_GATEWAY_TOKEN="$(
+python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+)"
+python3 scripts/reference_agent_client.py \
+  --base-url http://127.0.0.1:9080 \
+  --vertical restaurant \
+  --operation reserve \
+  --execution-class CONTROLLED_SIMULATOR \
+  --input examples/restaurant_reserve_normal.json
+```
+
+Sequence:
+
+1. **Discover Runtime Surface** — `GET /v1/reference-profile`
+2. **Preflight Interaction** — `POST /v1/demo/{vertical}/preflight`
+3. **Invoke Interaction** — profile-provided relative path with Bearer auth
+4. **Inspect Native Result / Trace** — `native_result.external_status` and `outcome_disposition`
+
+`NATIVE RESULT: CONFIRMED` does **not** mean Business Outcome SUCCESS. The client does not assert conformance, certification, or trust.
+
+See: `examples/reference_agent_request.json`
+
+### 7. Send a Business Interaction (manual curl)
 
 In a second terminal:
 
@@ -149,7 +176,7 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json | python3 -m json.tool
 ```
 
-### 7. Inspect business state
+### 8. Inspect business state
 
 ```bash
 cat ./data/state.json | python3 -m json.tool
