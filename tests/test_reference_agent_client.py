@@ -17,7 +17,6 @@ from abis_grp_runtime.agent.reference_client import (  # noqa: E402
     ReferenceClientConfig,
     ReferenceClientError,
 )
-from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.preflight import (  # noqa: E402
     PREFLIGHT_EXECUTION_DENIED,
@@ -26,7 +25,8 @@ from abis_grp_runtime.gateway.preflight import (  # noqa: E402
 )
 from abis_grp_runtime.gateway.reference_profile import PROFILE_KIND  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from crs.engine import ReservationEngine  # noqa: E402
+from tests._profile_helpers import valid_descriptor, valid_profile  # noqa: E402
+from tests._service import make_test_service  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-reference-do-not-commit"
 
@@ -51,26 +51,10 @@ def _invoke_payload(*, correlation_id: str = "ref-client-e2e-001") -> dict:
     }
 
 
-def _valid_profile(*, invoke_path: str = "/v1/demo/restaurant/invoke") -> dict:
-    return {
-        "profile_kind": PROFILE_KIND,
-        "profile_version": 1,
-        "advertised_interactions": [
-            {
-                "vertical": "restaurant",
-                "operation": "reserve",
-                "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
-                "invocation": {"method": "POST", "path": invoke_path},
-            }
-        ],
-    }
-
-
 class GatewayServerTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.engine = ReservationEngine(data_dir=self.tmp.name)
-        self.service = GrokE2EService(self.engine)
+        self.service = make_test_service(self.tmp.name)
         self.config = GatewayConfig(
             host="127.0.0.1",
             port=0,
@@ -119,7 +103,7 @@ class TestReferenceClientUnit(unittest.TestCase):
     def test_locate_interaction_missing(self) -> None:
         with self.assertRaises(ReferenceClientError):
             ReferenceAgentClient.locate_interaction(
-                _valid_profile(),
+                valid_profile(),
                 vertical="restaurant",
                 operation="modify",
             )
@@ -130,6 +114,7 @@ class TestReferenceClientPositiveE2E(GatewayServerTestCase):
         client = self._client()
         result = client.execute(_invoke_payload())
         self.assertTrue(result.profile_checked)
+        self.assertTrue(result.descriptor_checked)
         self.assertEqual(result.preflight_state, PREFLIGHT_READY)
         self.assertTrue(result.invoke_attempted)
         self.assertEqual(result.transport_status, "ACCEPTED")
@@ -141,24 +126,25 @@ class TestReferenceClientPositiveE2E(GatewayServerTestCase):
 
     def test_dynamic_invoke_path_from_profile(self) -> None:
         client = self._client()
-        with patch.object(client, "fetch_profile", return_value=_valid_profile()):
-            with patch.object(
-                client,
-                "run_preflight",
-                return_value={
-                    "preflight_state": PREFLIGHT_READY,
-                    "invocation": {"method": "POST", "path": "/v1/demo/restaurant/invoke"},
-                },
-            ):
-                captured: dict[str, str] = {}
-                original_invoke = ReferenceAgentClient.invoke
+        captured: dict[str, str] = {}
+        original_invoke = ReferenceAgentClient.invoke
 
-                def _capture_invoke(path: str, payload: dict) -> dict:
-                    captured["path"] = path
-                    return original_invoke(client, path, payload)
+        def _capture_invoke(self_client: ReferenceAgentClient, path: str, payload: dict) -> dict:
+            captured["path"] = path
+            return original_invoke(self_client, path, payload)
 
-                with patch.object(client, "invoke", side_effect=_capture_invoke):
-                    result = client.execute(_invoke_payload(correlation_id="dynamic-path-001"))
+        with patch.object(client, "fetch_profile", return_value=valid_profile()):
+            with patch.object(client, "fetch_descriptor", return_value=valid_descriptor()):
+                with patch.object(
+                    client,
+                    "run_preflight",
+                    return_value={
+                        "preflight_state": PREFLIGHT_READY,
+                        "invocation": {"method": "POST", "path": "/v1/demo/restaurant/invoke"},
+                    },
+                ):
+                    with patch.object(client, "invoke", side_effect=lambda path, payload: _capture_invoke(client, path, payload)):
+                        result = client.execute(_invoke_payload(correlation_id="dynamic-path-001"))
         self.assertTrue(result.invoke_attempted)
         self.assertEqual(captured["path"], "/v1/demo/restaurant/invoke")
 
@@ -199,9 +185,10 @@ class TestReferenceClientNegativeE2E(GatewayServerTestCase):
         with patch.object(
             client,
             "fetch_profile",
-            return_value=_valid_profile(invoke_path="https://evil.example/invoke"),
+            return_value=valid_profile(invoke_path="https://evil.example/invoke"),
         ):
-            result = client.execute(_invoke_payload(correlation_id="neg-abs-url-001"))
+            with patch.object(client, "fetch_descriptor", return_value=valid_descriptor(invoke_path="https://evil.example/invoke")):
+                result = client.execute(_invoke_payload(correlation_id="neg-abs-url-001"))
         self.assertFalse(result.invoke_attempted)
 
     def test_missing_token_prevents_invoke(self) -> None:
@@ -213,8 +200,8 @@ class TestReferenceClientNegativeE2E(GatewayServerTestCase):
         self.assertEqual(self._reservation_count(), 0)
 
     def test_not_advertised_vertical(self) -> None:
-        client = self._client(vertical="shopping")
-        result = client.execute(_invoke_payload(correlation_id="neg-shopping-001"))
+        client = self._client(vertical="travel")
+        result = client.execute(_invoke_payload(correlation_id="neg-travel-001"))
         self.assertFalse(result.invoke_attempted)
         self.assertIn(result.error or "", ("requested interaction not present in profile", "preflight not ready"))
 

@@ -1,17 +1,19 @@
-"""Strict external request validation — fail closed, SSRF-safe."""
+"""Strict external request validation — fail closed, SSRF-safe, vertical-neutral."""
 
 from __future__ import annotations
 
 import re
 from typing import Any, Mapping
 
-from abis_grp_runtime.gateway.config import (
-    ALLOWED_EXECUTION_CLASSES,
-    ALLOWED_OPERATIONS,
-    ALLOWED_VERTICALS_M206B,
-)
+from abis_grp_runtime.gateway.config import ALLOWED_EXECUTION_CLASSES
+from abis_grp_runtime.adapters.errors import AdapterValidationError
 from abis_grp_runtime.gateway.errors import GatewayError, GatewayErrorCode
-from abis_grp_runtime.gateway.execution_surface import is_advertised_invocation
+from abis_grp_runtime.gateway.execution_surface import (
+    is_advertised_invocation,
+    published_operations,
+    published_verticals,
+)
+from abis_grp_runtime.registry.interaction_registry import require_active_registry
 
 DANGEROUS_TOP_LEVEL_KEYS = frozenset(
     {
@@ -40,19 +42,6 @@ DANGEROUS_TOP_LEVEL_KEYS = frozenset(
     }
 )
 
-DANGEROUS_INPUT_KEYS = frozenset(
-    DANGEROUS_TOP_LEVEL_KEYS
-    | {
-        "endpoint",
-        "redirect",
-        "fetch",
-        "curl",
-        "wget",
-        "local_path",
-        "remote_url",
-    }
-)
-
 ALLOWED_TOP_LEVEL_KEYS = frozenset(
     {
         "agent_id",
@@ -65,20 +54,6 @@ ALLOWED_TOP_LEVEL_KEYS = frozenset(
         "input",
         "structured_input",
         "metadata",
-    }
-)
-
-ALLOWED_INPUT_KEYS = frozenset(
-    {
-        "date",
-        "time",
-        "party_size",
-        "seating_type",
-        "customer_reference",
-        "test_scenario",
-        "idempotency_key",
-        "_test_reason_override",
-        "_test_scenario_override",
     }
 )
 
@@ -111,12 +86,13 @@ def validate_vertical(vertical: str | None) -> GatewayError | None:
     if not vertical:
         return GatewayError(GatewayErrorCode.REQUEST_INVALID, "vertical missing from route", http_status=404)
     normalized = vertical.strip().lower()
-    if normalized not in ALLOWED_VERTICALS_M206B:
+    allowed = published_verticals()
+    if normalized not in allowed:
         return GatewayError(
             GatewayErrorCode.VERTICAL_DENIED,
             "vertical not enabled for reference execution surface",
             http_status=403,
-            detail={"vertical": normalized, "allowed": sorted(ALLOWED_VERTICALS_M206B)},
+            detail={"vertical": normalized, "allowed": sorted(allowed)},
         )
     return None
 
@@ -161,12 +137,13 @@ def validate_payload(data: Any, *, vertical: str) -> tuple[dict[str, Any] | None
         )
 
     operation = str(data["operation"]).strip().lower()
-    if operation not in ALLOWED_OPERATIONS:
+    allowed_ops = published_operations()
+    if operation not in allowed_ops:
         return None, GatewayError(
             GatewayErrorCode.OPERATION_DENIED,
             "operation not allowed",
             http_status=403,
-            detail={"operation": operation, "allowed": sorted(ALLOWED_OPERATIONS)},
+            detail={"operation": operation, "allowed": sorted(allowed_ops)},
         )
 
     execution_class = str(data["execution_class"]).strip().upper()
@@ -184,12 +161,12 @@ def validate_payload(data: Any, *, vertical: str) -> tuple[dict[str, Any] | None
         )
 
     if not is_advertised_invocation(vertical, operation, execution_class):
-        if operation not in ALLOWED_OPERATIONS:
+        if operation not in allowed_ops:
             return None, GatewayError(
                 GatewayErrorCode.OPERATION_DENIED,
                 "operation not allowed",
                 http_status=403,
-                detail={"operation": operation, "allowed": sorted(ALLOWED_OPERATIONS)},
+                detail={"operation": operation, "allowed": sorted(allowed_ops)},
             )
         return None, GatewayError(
             GatewayErrorCode.EXECUTION_CLASS_DENIED,
@@ -207,10 +184,6 @@ def validate_payload(data: Any, *, vertical: str) -> tuple[dict[str, Any] | None
         )
 
     structured = dict(data[input_key])
-    unknown_input = _reject_unknown_keys(structured, ALLOWED_INPUT_KEYS, "input")
-    if unknown_input:
-        return None, unknown_input
-
     if _contains_url_like(structured):
         return None, GatewayError(
             GatewayErrorCode.REQUEST_INVALID,
@@ -218,14 +191,16 @@ def validate_payload(data: Any, *, vertical: str) -> tuple[dict[str, Any] | None
             http_status=400,
         )
 
-    for field in ("date", "time", "party_size", "seating_type"):
-        if field not in structured:
-            return None, GatewayError(
-                GatewayErrorCode.REQUEST_INVALID,
-                "restaurant input missing required field",
-                http_status=400,
-                detail={"missing": field},
-            )
+    registry = require_active_registry()
+    try:
+        registry.validate_structured_input(vertical, operation, structured)
+    except AdapterValidationError as exc:
+        return None, GatewayError(
+            GatewayErrorCode.REQUEST_INVALID,
+            str(exc),
+            http_status=400,
+            detail={"missing": exc.missing, "fields": exc.fields} if exc.missing or exc.fields else None,
+        )
 
     normalized = dict(data)
     normalized["structured_input"] = structured

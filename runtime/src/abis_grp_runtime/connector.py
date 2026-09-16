@@ -10,27 +10,15 @@ from abis_grp_runtime.native_result import NativeResultEnvelope
 
 class BusinessConnectorPort(ABC):
     """
-    Generic connector interface for future Business Systems.
+    Generic connector interface for Business Systems.
 
-    Domain-neutral operation names only — no restaurant-specific policy embedded.
+    Domain-neutral execute(operation, context) only at the shared contract boundary.
     """
 
     connector_id: str = "abstract"
 
     @abstractmethod
-    def check_availability(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        ...
-
-    @abstractmethod
-    def reserve(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        ...
-
-    @abstractmethod
-    def modify(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        ...
-
-    @abstractmethod
-    def cancel(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
+    def execute(self, operation: str, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
         ...
 
 
@@ -39,36 +27,12 @@ class NullConnector(BusinessConnectorPort):
 
     connector_id = "null"
 
-    def check_availability(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
+    def execute(self, operation: str, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
         return NativeResultEnvelope(
             technical_status="NULL_EXECUTOR",
             external_status=None,
             source=self.connector_id,
-            payload={"operation": "check_availability", "mutated": False},
-        )
-
-    def reserve(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        return NativeResultEnvelope(
-            technical_status="NULL_EXECUTOR",
-            external_status=None,
-            source=self.connector_id,
-            payload={"operation": "reserve", "mutated": False},
-        )
-
-    def modify(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        return NativeResultEnvelope(
-            technical_status="NULL_EXECUTOR",
-            external_status=None,
-            source=self.connector_id,
-            payload={"operation": "modify", "mutated": False},
-        )
-
-    def cancel(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        return NativeResultEnvelope(
-            technical_status="NULL_EXECUTOR",
-            external_status=None,
-            source=self.connector_id,
-            payload={"operation": "cancel", "mutated": False},
+            payload={"operation": operation, "mutated": False},
         )
 
 
@@ -77,35 +41,48 @@ class FixtureConnector(BusinessConnectorPort):
 
     connector_id = "fixture"
 
-    def check_availability(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
+    def execute(self, operation: str, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
+        op = operation.strip().lower()
+        if op == "check_availability":
+            return NativeResultEnvelope(
+                technical_status="FIXTURE_OK",
+                external_status="AVAILABLE",
+                source=self.connector_id,
+                payload={"operation": op, "fixture": True, "mutated": False},
+            )
+        if op == "reserve":
+            return NativeResultEnvelope(
+                technical_status="FIXTURE_OK",
+                external_status="CONFIRMED",
+                external_identifier="FIX-001",
+                source=self.connector_id,
+                payload={"operation": op, "fixture": True, "mutated": False},
+            )
+        if op == "modify":
+            return NativeResultEnvelope(
+                technical_status="FIXTURE_OK",
+                external_status="MODIFIED",
+                source=self.connector_id,
+                payload={"operation": op, "fixture": True, "mutated": False},
+            )
+        if op == "cancel":
+            return NativeResultEnvelope(
+                technical_status="FIXTURE_OK",
+                external_status="CANCELLED",
+                source=self.connector_id,
+                payload={"operation": op, "fixture": True, "mutated": False},
+            )
+        if op == "submit_order":
+            return NativeResultEnvelope(
+                technical_status="FIXTURE_OK",
+                external_status="ORDER_SUBMITTED",
+                external_identifier="FIX-ORD-001",
+                source=self.connector_id,
+                payload={"operation": op, "fixture": True, "mutated": False},
+            )
         return NativeResultEnvelope(
-            technical_status="FIXTURE_OK",
-            external_status="AVAILABLE",
+            technical_status="NULL_EXECUTOR",
+            external_status=None,
             source=self.connector_id,
-            payload={"operation": "check_availability", "fixture": True, "mutated": False},
-        )
-
-    def reserve(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        return NativeResultEnvelope(
-            technical_status="FIXTURE_OK",
-            external_status="CONFIRMED",
-            external_identifier="FIX-001",
-            source=self.connector_id,
-            payload={"operation": "reserve", "fixture": True, "mutated": False},
-        )
-
-    def modify(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        return NativeResultEnvelope(
-            technical_status="FIXTURE_OK",
-            external_status="MODIFIED",
-            source=self.connector_id,
-            payload={"operation": "modify", "fixture": True, "mutated": False},
-        )
-
-    def cancel(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        return NativeResultEnvelope(
-            technical_status="FIXTURE_OK",
-            external_status="CANCELLED",
-            source=self.connector_id,
-            payload={"operation": "cancel", "fixture": True, "mutated": False},
+            payload={"operation": operation, "mutated": False},
         )

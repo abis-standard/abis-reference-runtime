@@ -48,6 +48,41 @@ class RestaurantSimulatorConnector(BusinessConnectorPort):
         self._engine = engine
         self._target = target
 
+    def execute(self, operation: str, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
+        op = operation.strip().lower()
+        ctx = dict(operation_context)
+        if op == "check_availability":
+            crs = self._engine.availability(
+                date=str(ctx.get("date", "")),
+                party_size=int(ctx.get("party_size", 0)),
+                preferred_time=ctx.get("time"),
+                seating_type=ctx.get("seating_type"),
+                test_scenario=ctx.get("test_scenario"),
+            )
+            return crs_dict_to_native_envelope(crs, operation=op)
+        if op == "reserve":
+            crs = self._engine.reserve(**self._reserve_fields(ctx))
+            return crs_dict_to_native_envelope(crs, operation=op)
+        if op == "modify":
+            reservation_id = str(ctx.get("reservation_id", ""))
+            fields = {
+                k: ctx[k]
+                for k in ("date", "time", "party_size", "seating_type", "customer_reference", "status")
+                if k in ctx
+            }
+            crs = self._engine.modify(reservation_id, fields, test_scenario=ctx.get("test_scenario"))
+            return crs_dict_to_native_envelope(crs, operation=op)
+        if op == "cancel":
+            reservation_id = str(ctx.get("reservation_id", ""))
+            crs = self._engine.cancel(reservation_id, test_scenario=ctx.get("test_scenario"))
+            return crs_dict_to_native_envelope(crs, operation=op)
+        return NativeResultEnvelope(
+            technical_status="TRANSPORT_FAILED",
+            external_status=None,
+            source=self.connector_id,
+            payload={"operation": operation, "error": "unsupported_operation"},
+        )
+
     def _reserve_fields(self, ctx: Mapping[str, Any]) -> dict[str, Any]:
         return {
             "date": str(ctx.get("date", "")),
@@ -58,33 +93,3 @@ class RestaurantSimulatorConnector(BusinessConnectorPort):
             "idempotency_key": str(ctx.get("idempotency_key") or ctx.get("correlation_id") or "idem-e2e"),
             "test_scenario": ctx.get("test_scenario"),
         }
-
-    def check_availability(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        ctx = dict(operation_context)
-        crs = self._engine.availability(
-            date=str(ctx.get("date", "")),
-            party_size=int(ctx.get("party_size", 0)),
-            preferred_time=ctx.get("time"),
-            seating_type=ctx.get("seating_type"),
-            test_scenario=ctx.get("test_scenario"),
-        )
-        return crs_dict_to_native_envelope(crs, operation="check_availability")
-
-    def reserve(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        crs = self._engine.reserve(**self._reserve_fields(operation_context))
-        return crs_dict_to_native_envelope(crs, operation="reserve")
-
-    def modify(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        reservation_id = str(operation_context.get("reservation_id", ""))
-        fields = {
-            k: operation_context[k]
-            for k in ("date", "time", "party_size", "seating_type", "customer_reference", "status")
-            if k in operation_context
-        }
-        crs = self._engine.modify(reservation_id, fields, test_scenario=operation_context.get("test_scenario"))
-        return crs_dict_to_native_envelope(crs, operation="modify")
-
-    def cancel(self, operation_context: Mapping[str, Any]) -> NativeResultEnvelope:
-        reservation_id = str(operation_context.get("reservation_id", ""))
-        crs = self._engine.cancel(reservation_id, test_scenario=operation_context.get("test_scenario"))
-        return crs_dict_to_native_envelope(crs, operation="cancel")

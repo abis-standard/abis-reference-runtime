@@ -1,21 +1,45 @@
 {
+  "profile_kind": "abis-reference-runtime-profile",
+  "profile_version": 2,
+  "execution_surface_revision": "reference-execution-surface-2",
+  "runtime": {
+    "name": "abis-reference-runtime",
+    "version": "0.4.0"
+  },
+  "authority": {
+    "semantic": "NONE",
+    "normative": "NONE"
+  },
   "advertised_interactions": [
     {
-      "execution_classes_allowed": [
-        "CONTROLLED_SIMULATOR"
-      ],
+      "vertical": "restaurant",
+      "operation": "reserve",
+      "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
       "invocation": {
         "method": "POST",
         "path": "/v1/demo/restaurant/invoke"
       },
-      "operation": "reserve",
-      "vertical": "restaurant"
+      "descriptor_path": "/v1/reference-profile/interactions/restaurant/reserve",
+      "business_system": {
+        "identifier": "abis-demo-restaurant-simulator",
+        "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
+      }
+    },
+    {
+      "vertical": "shopping",
+      "operation": "submit_order",
+      "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
+      "invocation": {
+        "method": "POST",
+        "path": "/v1/demo/shopping/invoke"
+      },
+      "descriptor_path": "/v1/reference-profile/interactions/shopping/submit_order",
+      "business_system": {
+        "identifier": "abis-demo-commerce-simulator",
+        "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
+      }
     }
   ],
-  "authority": {
-    "normative": "NONE",
-    "semantic": "NONE"
-  },
   "authorization": {
     "invoke": {
       "required": true,
@@ -23,24 +47,17 @@
     }
   },
   "business_system": {
-    "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE",
-    "identifier": "abis-demo-restaurant-simulator"
+    "identifier": "abis-demo-restaurant-simulator",
+    "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
   },
   "execution_boundary": {
     "real_execution": "PROHIBITED"
   },
-  "execution_surface_revision": "restaurant-reserve-1",
-  "health": {
-    "method": "GET",
-    "path": "/health"
-  },
   "outcome_boundary": {
     "normative_business_outcome_evaluation": "NOT_IMPLEMENTED"
   },
-  "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 1,
-  "runtime": {
-    "name": "abis-reference-runtime",
-    "version": "0.3.0"
+  "health": {
+    "method": "GET",
+    "path": "/health"
   }
 }

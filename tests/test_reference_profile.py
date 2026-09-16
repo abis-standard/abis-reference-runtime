@@ -13,7 +13,6 @@ from tests._bootstrap import ensure_paths
 ensure_paths()
 
 from abis_grp_runtime.version import __version__  # noqa: E402
-from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.reference_profile import (  # noqa: E402
     PROFILE_KIND,
@@ -21,7 +20,7 @@ from abis_grp_runtime.gateway.reference_profile import (  # noqa: E402
     build_reference_runtime_profile,
 )
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from crs.engine import ReservationEngine  # noqa: E402
+from tests._service import make_test_service  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-reference-do-not-commit"
 FORBIDDEN_SEMANTIC_TERMS = (
@@ -39,8 +38,7 @@ URL_PATTERN = re.compile(r"https?://", re.IGNORECASE)
 class ReferenceProfileTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.engine = ReservationEngine(data_dir=self.tmp.name)
-        self.service = GrokE2EService(self.engine)
+        self.service = make_test_service(self.tmp.name)
         self.config = GatewayConfig(
             host="127.0.0.1",
             port=0,
@@ -77,15 +75,17 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
         self.assertEqual(body["runtime"]["version"], __version__)
         self.assertEqual(body["authority"]["semantic"], "NONE")
         self.assertEqual(body["authority"]["normative"], "NONE")
-        self.assertEqual(body["execution_surface_revision"], "restaurant-reserve-1")
+        self.assertEqual(body["execution_surface_revision"], "reference-execution-surface-2")
 
     def test_advertised_interactions_match_gateway_truth(self) -> None:
         _, body, _ = self._get("/v1/reference-profile")
         interactions = body["advertised_interactions"]
-        self.assertEqual(len(interactions), 1)
-        item = interactions[0]
-        self.assertEqual(item["vertical"], "restaurant")
+        self.assertEqual(len(interactions), 2)
+        verticals = {item["vertical"] for item in interactions}
+        self.assertEqual(verticals, {"restaurant", "shopping"})
+        item = next(i for i in interactions if i["vertical"] == "restaurant")
         self.assertEqual(item["operation"], "reserve")
+        self.assertIn("descriptor_path", item)
         self.assertEqual(item["execution_classes_allowed"], ["CONTROLLED_SIMULATOR"])
         self.assertEqual(item["invocation"]["method"], "POST")
         self.assertEqual(item["invocation"]["path"], "/v1/demo/restaurant/invoke")
@@ -138,8 +138,8 @@ class TestHealthCompatibility(ReferenceProfileTestCase):
         status, body, _ = self._get("/health")
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["verticals_enabled"], ["restaurant"])
-        self.assertEqual(body["operations_allowed"], ["reserve"])
+        self.assertEqual(body["verticals_enabled"], ["restaurant", "shopping"])
+        self.assertEqual(sorted(body["operations_allowed"]), ["reserve", "submit_order"])
         self.assertEqual(body["execution_class_allowed"], ["CONTROLLED_SIMULATOR"])
         self.assertEqual(body["real_execution"], "PROHIBITED")
         self.assertEqual(body["semantic_authority"], "NONE")

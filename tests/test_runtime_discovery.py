@@ -27,12 +27,11 @@ from abis_grp_runtime.discovery.pointer import (  # noqa: E402
     build_reference_runtime_pointer,
 )
 from abis_grp_runtime.discovery.resolver import DiscoveryError, resolve_runtime_base_url  # noqa: E402
-from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION  # noqa: E402
 from abis_grp_runtime.gateway.preflight import PREFLIGHT_READY  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from crs.engine import ReservationEngine  # noqa: E402
+from tests._service import make_test_service  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-discovery-do-not-commit"
 FORBIDDEN_TERMS = (
@@ -92,8 +91,7 @@ class _PointerOriginHandler(BaseHTTPRequestHandler):
 class DiscoveryServerTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.engine = ReservationEngine(data_dir=self.tmp.name)
-        self.service = GrokE2EService(self.engine)
+        self.service = make_test_service(self.tmp.name)
         self.gateway_config = GatewayConfig(
             host="127.0.0.1",
             port=0,

@@ -13,7 +13,6 @@ from tests._bootstrap import ensure_paths
 
 ensure_paths()
 
-from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.execution_surface import (  # noqa: E402
     advertised_interactions,
@@ -29,20 +28,27 @@ from abis_grp_runtime.gateway.preflight import (  # noqa: E402
 )
 from abis_grp_runtime.gateway.reference_profile import build_reference_runtime_profile  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from crs.engine import ReservationEngine  # noqa: E402
+from tests._service import make_test_service  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-reference-do-not-commit"
 
 
-def _invoke_payload(*, operation: str = "reserve", execution_class: str = "CONTROLLED_SIMULATOR", correlation_id: str) -> dict:
-    return {
-        "agent_id": "consistency-agent-001",
-        "agent_type": "reference-agent",
-        "operation": operation,
-        "execution_class": execution_class,
-        "authorization_token": "ALLOW",
-        "correlation_id": correlation_id,
-        "input": {
+def _invoke_payload(
+    *,
+    vertical: str = "restaurant",
+    operation: str = "reserve",
+    execution_class: str = "CONTROLLED_SIMULATOR",
+    correlation_id: str,
+) -> dict:
+    if vertical == "shopping" and operation == "submit_order":
+        structured = {
+            "sku_id": "SKU-DEMO-001",
+            "quantity": 1,
+            "idempotency_key": f"idem-{correlation_id}",
+            "test_scenario": "NORMAL_SUCCESS",
+        }
+    else:
+        structured = {
             "date": "2026-09-12",
             "time": "20:00",
             "party_size": 4,
@@ -50,7 +56,15 @@ def _invoke_payload(*, operation: str = "reserve", execution_class: str = "CONTR
             "customer_reference": "TEST-CUST-CONSISTENCY",
             "idempotency_key": f"idem-{correlation_id}",
             "test_scenario": "NORMAL_SUCCESS",
-        },
+        }
+    return {
+        "agent_id": "consistency-agent-001",
+        "agent_type": "reference-agent",
+        "operation": operation,
+        "execution_class": execution_class,
+        "authorization_token": "ALLOW",
+        "correlation_id": correlation_id,
+        "input": structured,
     }
 
 
@@ -88,6 +102,14 @@ CONSISTENCY_MATRIX = [
         "invoke_permitted": False,
     },
     {
+        "vertical": "shopping",
+        "operation": "submit_order",
+        "execution_class": "CONTROLLED_SIMULATOR",
+        "advertised": True,
+        "preflight_state": PREFLIGHT_READY,
+        "invoke_permitted": True,
+    },
+    {
         "vertical": "restaurant",
         "operation": "reserve",
         "execution_class": "REAL_EXTERNAL",
@@ -101,8 +123,7 @@ CONSISTENCY_MATRIX = [
 class ExecutionConsistencyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.engine = ReservationEngine(data_dir=self.tmp.name)
-        self.service = GrokE2EService(self.engine)
+        self.service = make_test_service(self.tmp.name)
         self.config = GatewayConfig(
             host="127.0.0.1",
             port=0,
@@ -168,6 +189,7 @@ class ExecutionConsistencyTestCase(unittest.TestCase):
             status, body = self._post_invoke(
                 item.vertical,
                 _invoke_payload(
+                    vertical=item.vertical,
                     operation=item.operation,
                     execution_class=sorted(item.execution_classes_allowed)[0],
                     correlation_id=f"surface-{item.vertical}-{item.operation}",
@@ -205,6 +227,7 @@ class ExecutionConsistencyTestCase(unittest.TestCase):
                 status, body = self._post_invoke(
                     vertical,
                     _invoke_payload(
+                        vertical=vertical,
                         operation=operation,
                         execution_class=execution_class,
                         correlation_id=f"matrix-{vertical}-{operation}-{execution_class}",
@@ -218,7 +241,8 @@ class ExecutionConsistencyTestCase(unittest.TestCase):
                     self.assertIn("error", body)
 
         if before_count == 0:
-            self.assertEqual(self._reservation_count(), 1 if any(c["invoke_permitted"] for c in CONSISTENCY_MATRIX) else 0)
+            permitted = sum(1 for c in CONSISTENCY_MATRIX if c["invoke_permitted"] and c["vertical"] == "restaurant")
+            self.assertEqual(self._reservation_count(), permitted)
 
 
 if __name__ == "__main__":

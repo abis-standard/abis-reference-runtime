@@ -17,6 +17,7 @@ from abis_grp_runtime.gateway.evidence_log import append_evidence
 from abis_grp_runtime.gateway.rate_limit import RateLimitState
 from abis_grp_runtime.gateway.preflight import evaluate_preflight, parse_preflight_payload
 from abis_grp_runtime.gateway.reference_profile import (
+    DESCRIPTOR_PATH_PREFIX,
     REFERENCE_PROFILE_PATH,
     build_health_response,
     build_reference_runtime_profile,
@@ -25,6 +26,9 @@ from abis_grp_runtime.gateway.validation import validate_payload
 
 INVOKE_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/invoke/?$")
 PREFLIGHT_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/preflight/?$")
+DESCRIPTOR_PATH = re.compile(
+    r"^/v1/reference-profile/interactions/(?P<vertical>[a-z_]+)/(?P<operation>[a-z_]+)/?$"
+)
 
 
 class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
@@ -32,7 +36,7 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
     config: GatewayConfig
     rate_limit: RateLimitState
 
-    server_version = "ABISDemoGateway/0.2"
+    server_version = "ABISDemoGateway/0.4"
 
     def log_message(self, format: str, *args: Any) -> None:
         if getattr(self.server, "quiet", False):  # type: ignore[attr-defined]
@@ -83,6 +87,17 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
             return
         if path == REFERENCE_PROFILE_PATH:
             self._send_json(200, build_reference_runtime_profile(self.config))
+            return
+        descriptor_match = DESCRIPTOR_PATH.match(path)
+        if descriptor_match:
+            vertical = descriptor_match.group("vertical")
+            operation = descriptor_match.group("operation")
+            try:
+                body = self.service.registry.get_descriptor(vertical, operation)
+            except KeyError:
+                self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "not found", http_status=404))
+                return
+            self._send_json(200, body)
             return
         self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "not found", http_status=404))
 

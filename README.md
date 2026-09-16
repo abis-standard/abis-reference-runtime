@@ -1,8 +1,26 @@
 # ABIS Reference Runtime
 
-**Developer Preview — v0.3.0**
+**Developer Preview — v0.4.0**
 
-Reference implementation for executing ABIS Business Interactions against a controlled reference business system.
+Reference implementation for executing ABIS Business Interactions against controlled reference business systems.
+
+---
+
+## What's new in v0.4.0 (vs v0.3.0)
+
+| Area | v0.3.0 | v0.4.0 |
+| --- | --- | --- |
+| Verticals | `restaurant/reserve` only | `restaurant/reserve` + `shopping/submit_order` |
+| Architecture | Restaurant-specific gateway paths | Business Adapter + Runtime Interaction Registry |
+| Profile | `profile_version=1` | `profile_version=2` with `descriptor_path` per interaction |
+| Interaction contract | Profile only | Profile → **Interaction Descriptor** → Preflight → Invoke |
+| Execution surface | `restaurant-reserve-1` | `reference-execution-surface-2` |
+| Commerce | — | Controlled Commerce Simulator (synthetic orders, no payment) |
+| Connector port | Operation-specific helpers | Generic `execute(operation, context)` |
+
+**Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · **no Internet-wide business discovery** · **REAL_EXECUTION PROHIBITED** · Native Result ≠ Business Outcome (`NOT_EVALUATED`).
+
+Interaction Descriptors are **implementation metadata only** — not ABIS Capability, not ABIS Intent, not conformance.
 
 ---
 
@@ -39,7 +57,7 @@ The Reference Runtime Pointer is an **implementation-level, informative, referen
 ## What this is
 
 - An **executable reference implementation** of the ABIS Business Interaction flow
-- A **localhost HTTP gateway** for restaurant reservation interactions
+- A **localhost HTTP gateway** for multi-vertical reference interactions (`restaurant`, `shopping`)
 - An **ABIS Runtime Core** pipeline (authorization → execution → connector → trace)
 - A **Controlled Reservation Simulator** with persistent `state.json`
 - **Native Business Result** return, **idempotency**, and **execution trace** (`trace_reference`)
@@ -58,7 +76,7 @@ The Reference Runtime Pointer is an **implementation-level, informative, referen
 
 ## Architecture
 
-### Discovery flow (v0.3.0)
+### Discovery flow (v0.4.0)
 
 ```text
 Known Business Origin
@@ -71,12 +89,21 @@ Runtime Base URL
       ↓
 GET /v1/reference-profile
       ↓
+GET descriptor_path (Interaction Descriptor)
+      ↓
 POST /v1/demo/{vertical}/preflight
       ↓
 POST profile-advertised invoke path (Bearer)
       ↓
 Native Business Result + trace_reference
+      ↓
+Outcome: NOT_EVALUATED
 ```
+
+Published interactions (v0.4.0):
+
+- `restaurant` / `reserve` / `CONTROLLED_SIMULATOR`
+- `shopping` / `submit_order` / `CONTROLLED_SIMULATOR`
 
 ### Direct Runtime flow (v0.2.0+, still supported)
 

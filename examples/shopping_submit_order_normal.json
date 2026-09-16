@@ -1,0 +1,14 @@
+{
+  "agent_id": "reference-agent-001",
+  "agent_type": "reference-agent",
+  "operation": "submit_order",
+  "execution_class": "CONTROLLED_SIMULATOR",
+  "authorization_token": "ALLOW",
+  "correlation_id": "shopping-normal-001",
+  "input": {
+    "sku_id": "SKU-DEMO-001",
+    "quantity": 1,
+    "idempotency_key": "idem-shopping-normal-001",
+    "test_scenario": "NORMAL_SUCCESS"
+  }
+}

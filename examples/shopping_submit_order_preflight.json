@@ -1,0 +1,4 @@
+{
+  "operation": "submit_order",
+  "execution_class": "CONTROLLED_SIMULATOR"
+}

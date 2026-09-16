@@ -120,8 +120,24 @@ class RuntimeCore:
         trace.record("connector_attempt", "START", connector_id=connector.connector_id, operation=operation)
 
         op_ctx = dict(operation_context or {})
-        handler = getattr(connector, operation, None)
-        if handler is None:
+        try:
+            native_result = connector.execute(operation, op_ctx)
+        except Exception as exc:  # pragma: no cover - defensive boundary
+            trace.record("connector_attempt", "DENY", reason=str(exc))
+            return RuntimePipelineResult(
+                context=context,
+                authorization=authorization,
+                execution=execution,
+                control_plane_pass=True,
+                native_result=None,
+                outcome_disposition=None,
+                trace=trace,
+                halted=True,
+                halt_reason=str(exc),
+            )
+        if native_result.technical_status == "TRANSPORT_FAILED" and (
+            native_result.payload or {}
+        ).get("error") == "unsupported_operation":
             trace.record("connector_attempt", "DENY", reason=f"unsupported operation: {operation}")
             return RuntimePipelineResult(
                 context=context,
@@ -134,8 +150,6 @@ class RuntimeCore:
                 halted=True,
                 halt_reason=f"unsupported operation: {operation}",
             )
-
-        native_result = handler(op_ctx)
         trace.record(
             "native_result",
             native_result.technical_status,

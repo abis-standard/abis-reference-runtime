@@ -68,7 +68,7 @@ class TestConnectorInterface(unittest.TestCase):
             for name, _ in inspect.getmembers(BusinessConnectorPort, predicate=inspect.isfunction)
             if not name.startswith("_")
         }
-        self.assertEqual(methods, {"cancel", "check_availability", "modify", "reserve"})
+        self.assertEqual(methods, {"execute"})
 
 
 class TestRuntimePipeline(unittest.TestCase):

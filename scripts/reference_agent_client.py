@@ -12,7 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_SRC = ROOT / "runtime" / "src"
 CRS_SRC = ROOT / "reference-business" / "controlled-reservation-simulator" / "src"
-for path in (RUNTIME_SRC, CRS_SRC):
+CSS_SRC = ROOT / "reference-business" / "controlled-commerce-simulator" / "src"
+for path in (RUNTIME_SRC, CRS_SRC, CSS_SRC):
     sys.path.insert(0, str(path))
 
 from abis_grp_runtime.agent.reference_client import (  # noqa: E402
@@ -69,6 +70,7 @@ def main() -> int:
     if result.runtime_base_url:
         print(f"RUNTIME: {result.runtime_base_url}")
     print(f"PROFILE: {'OK' if result.profile_checked else 'FAIL'}")
+    print(f"DESCRIPTOR: {'OK' if result.descriptor_checked else 'FAIL'}")
     if result.profile_version is not None:
         print(f"PROFILE VERSION: {result.profile_version}")
     if result.runtime_version:
@@ -78,6 +80,8 @@ def main() -> int:
     print(f"PREFLIGHT: {result.preflight_state or 'NOT_RUN'}")
     print(f"INVOKE: {'ATTEMPTED' if result.invoke_attempted else 'NOT_ATTEMPTED'}")
     print(f"NATIVE RESULT: {result.native_external_status or '-'}")
+    if result.native_external_identifier:
+        print(f"NATIVE ID: {result.native_external_identifier}")
     print(f"OUTCOME: {result.outcome_disposition or '-'}")
     trace_id = (result.trace_reference or {}).get("correlation_id") or result.correlation_id or "-"
     print(f"TRACE: {trace_id}")

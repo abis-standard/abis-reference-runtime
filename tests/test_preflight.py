@@ -14,7 +14,6 @@ from tests._bootstrap import ensure_paths
 
 ensure_paths()
 
-from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.preflight import (  # noqa: E402
     PREFLIGHT_EXECUTION_DENIED,
@@ -24,7 +23,7 @@ from abis_grp_runtime.gateway.preflight import (  # noqa: E402
 )
 from abis_grp_runtime.gateway.reference_profile import build_reference_runtime_profile  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from crs.engine import ReservationEngine  # noqa: E402
+from tests._service import make_test_service  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-reference-do-not-commit"
 URL_PATTERN = re.compile(r"https?://", re.IGNORECASE)
@@ -37,8 +36,7 @@ def _ready_payload() -> dict:
 class PreflightTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.engine = ReservationEngine(data_dir=self.tmp.name)
-        self.service = GrokE2EService(self.engine)
+        self.service = make_test_service(self.tmp.name)
         self.config = GatewayConfig(
             host="127.0.0.1",
             port=0,
@@ -90,8 +88,8 @@ class TestPreflightStates(PreflightTestCase):
         self.assertFalse(body["disclaimer"]["business_outcome_prediction"])
         evidence = body["evidence"]
         self.assertIsNotNone(evidence.get("runtime_version"))
-        self.assertEqual(evidence.get("profile_version"), 1)
-        self.assertEqual(evidence.get("execution_surface_revision"), "restaurant-reserve-1")
+        self.assertEqual(evidence.get("profile_version"), 2)
+        self.assertEqual(evidence.get("execution_surface_revision"), "reference-execution-surface-2")
 
     def test_correlation_id_echoed_in_evidence(self) -> None:
         payload = {**_ready_payload(), "correlation_id": "preflight-correlation-001"}
@@ -115,11 +113,21 @@ class TestPreflightStates(PreflightTestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body["preflight_state"], PREFLIGHT_NOT_ADVERTISED)
 
-    def test_not_advertised_shopping(self) -> None:
+    def test_not_advertised_shopping_reserve(self) -> None:
         status, body = self._post_preflight("shopping", _ready_payload())
         self.assertEqual(status, 200)
         self.assertEqual(body["preflight_state"], PREFLIGHT_NOT_ADVERTISED)
         self.assertEqual(body["vertical"], "shopping")
+
+    def test_ready_shopping_submit_order(self) -> None:
+        status, body = self._post_preflight(
+            "shopping",
+            {"operation": "submit_order", "execution_class": "CONTROLLED_SIMULATOR"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(body["preflight_state"], PREFLIGHT_READY)
+        self.assertEqual(body["operation"], "submit_order")
+        self.assertEqual(body["invocation"]["path"], "/v1/demo/shopping/invoke")
 
     def test_execution_denied_real_external(self) -> None:
         status, body = self._post_preflight(
@@ -203,7 +211,7 @@ class TestPreflightBoundaries(PreflightTestCase):
     def test_health_compatible(self) -> None:
         health = self._get("/health")
         self.assertTrue(health["ok"])
-        self.assertEqual(health["operations_allowed"], ["reserve"])
+        self.assertEqual(sorted(health["operations_allowed"]), ["reserve", "submit_order"])
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from abis_grp_runtime.agent.envelope import AgentRequestEnvelope, SUPPORTED_OPERATIONS
+from abis_grp_runtime.agent.envelope import AgentRequestEnvelope
 from abis_grp_runtime.agent.errors import AgentContractErrorCode, AgentErrorEnvelope
 from abis_grp_runtime.execution import ExecutionClass
 
@@ -14,11 +14,10 @@ def validate_agent_request(request: AgentRequestEnvelope) -> AgentErrorEnvelope 
             code=AgentContractErrorCode.INVALID_REQUEST,
             message="agent_id is required",
         )
-    if not request.operation or request.operation not in SUPPORTED_OPERATIONS:
+    if not request.operation or not str(request.operation).strip():
         return AgentErrorEnvelope(
             code=AgentContractErrorCode.INVALID_REQUEST,
-            message="unsupported or missing operation",
-            detail={"supported": sorted(SUPPORTED_OPERATIONS)},
+            message="operation is required",
         )
     if not request.execution_class or not str(request.execution_class).strip():
         return AgentErrorEnvelope(

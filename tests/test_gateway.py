@@ -13,10 +13,9 @@ from tests._bootstrap import ensure_paths
 
 ensure_paths()
 
-from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
-from crs.engine import ReservationEngine  # noqa: E402
+from tests._service import make_test_service  # noqa: E402
 
 TEST_TOKEN = "test-gateway-token-reference-do-not-commit"
 
@@ -44,8 +43,7 @@ def _normal_success_payload() -> dict:
 class GatewayTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.engine = ReservationEngine(data_dir=self.tmp.name)
-        self.service = GrokE2EService(self.engine)
+        self.service = make_test_service(self.tmp.name)
         self.config = GatewayConfig(
             host="127.0.0.1",
             port=0,
@@ -131,6 +129,31 @@ class TestGatewayNormalSuccess(GatewayTestCase):
         self.assertEqual(body1["reservation_id"], body2["reservation_id"])
         state = json.loads((Path(self.tmp.name) / "state.json").read_text(encoding="utf-8"))
         self.assertEqual(len(state["reservations"]), 1)
+
+
+class TestGatewayGenericValidation(unittest.TestCase):
+    VERTICAL_SPECIFIC_FIELDS = (
+        "party_size",
+        "seating_type",
+        "sku_id",
+        '"date"',
+        '"time"',
+        '"quantity"',
+    )
+
+    def test_validation_module_has_no_vertical_field_coupling(self) -> None:
+        from pathlib import Path
+
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "runtime"
+            / "src"
+            / "abis_grp_runtime"
+            / "gateway"
+            / "validation.py"
+        ).read_text(encoding="utf-8")
+        for token in self.VERTICAL_SPECIFIC_FIELDS:
+            self.assertNotIn(token, source, msg=f"vertical-specific token present: {token}")
 
 
 class TestGatewayStartup(unittest.TestCase):

@@ -10,39 +10,47 @@ from abis_grp_runtime.gateway.execution_surface import (
     EXECUTION_SURFACE_REVISION,
     advertised_interactions,
 )
+from abis_grp_runtime.registry.interaction_registry import require_active_registry
 
 PROFILE_KIND = "abis-reference-runtime-profile"
-PROFILE_VERSION = 1
+PROFILE_VERSION = 2
 RUNTIME_NAME = "abis-reference-runtime"
 REFERENCE_PROFILE_PATH = "/v1/reference-profile"
 HEALTH_PATH = "/health"
+DESCRIPTOR_PATH_PREFIX = "/v1/reference-profile/interactions"
 
 BUSINESS_SYSTEM_IDENTIFIER = "abis-demo-restaurant-simulator"
 BUSINESS_SYSTEM_CLASSIFICATION = "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
 
-FUTURE_VERTICALS_RESERVED = ("shopping", "dental", "government", "travel")
+FUTURE_VERTICALS_RESERVED = ("dental", "government", "travel")
 
 
 def build_reference_runtime_profile(config: GatewayConfig) -> dict[str, Any]:
     """Canonical machine-readable description of the public execution surface."""
-    _ = config  # reserved for future mode/bind-specific profile fields
+    _ = config
+    interactions = advertised_interactions()
+    top_level_business_system = BUSINESS_SYSTEM_IDENTIFIER
+    if interactions:
+        first_bs = interactions[0].get("business_system") or {}
+        top_level_business_system = str(first_bs.get("identifier") or BUSINESS_SYSTEM_IDENTIFIER)
     return {
         "profile_kind": PROFILE_KIND,
         "profile_version": PROFILE_VERSION,
         "runtime": {
             "name": RUNTIME_NAME,
             "version": RUNTIME_VERSION,
+            "implementation_language": "python",
         },
         "authority": {
             "semantic": "NONE",
             "normative": "NONE",
         },
         "business_system": {
-            "identifier": BUSINESS_SYSTEM_IDENTIFIER,
+            "identifier": top_level_business_system,
             "classification": BUSINESS_SYSTEM_CLASSIFICATION,
         },
         "execution_surface_revision": EXECUTION_SURFACE_REVISION,
-        "advertised_interactions": advertised_interactions(),
+        "advertised_interactions": interactions,
         "authorization": {
             "invoke": {
                 "required": True,

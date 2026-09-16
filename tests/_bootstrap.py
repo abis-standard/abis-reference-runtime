@@ -8,9 +8,10 @@ from pathlib import Path
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_SRC = PACKAGE_ROOT / "runtime" / "src"
 CRS_SRC = PACKAGE_ROOT / "reference-business" / "controlled-reservation-simulator" / "src"
+CSS_SRC = PACKAGE_ROOT / "reference-business" / "controlled-commerce-simulator" / "src"
 
 
 def ensure_paths() -> None:
-    for path in (str(RUNTIME_SRC), str(CRS_SRC)):
+    for path in (str(RUNTIME_SRC), str(CRS_SRC), str(CSS_SRC)):
         if path not in sys.path:
             sys.path.insert(0, path)

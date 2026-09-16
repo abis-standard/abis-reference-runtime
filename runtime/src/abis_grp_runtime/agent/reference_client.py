@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from abis_grp_runtime.discovery.resolver import DiscoveryError, resolve_runtime_base_url
+from abis_grp_runtime.descriptor.constants import DESCRIPTOR_KIND
 from abis_grp_runtime.gateway.preflight import PREFLIGHT_READY
 from abis_grp_runtime.gateway.reference_profile import PROFILE_KIND
 
@@ -54,12 +55,14 @@ class ReferenceClientResult:
     pointer_checked: bool = False
     runtime_base_url: str | None = None
     profile_checked: bool = False
+    descriptor_checked: bool = False
     preflight_state: str | None = None
     invoke_attempted: bool = False
     transport_status: str | None = None
     native_external_status: str | None = None
     outcome_disposition: str | None = None
     trace_reference: dict[str, Any] | None = None
+    native_external_identifier: str | None = None
     reservation_id: str | None = None
     correlation_id: str | None = None
     profile_version: int | None = None
@@ -70,6 +73,7 @@ class ReferenceClientResult:
     profile: dict[str, Any] | None = field(default=None, repr=False)
     preflight: dict[str, Any] | None = field(default=None, repr=False)
     invoke_response: dict[str, Any] | None = field(default=None, repr=False)
+    descriptor: dict[str, Any] | None = field(default=None, repr=False)
 
 
 class ReferenceAgentClient:
@@ -141,6 +145,25 @@ class ReferenceAgentClient:
         request = Request(self._url("/v1/reference-profile"), method="GET")
         return self._read_json(request)
 
+    @staticmethod
+    def validate_descriptor(descriptor: Any) -> None:
+        if not isinstance(descriptor, dict):
+            raise ReferenceClientError("descriptor must be a JSON object")
+        if descriptor.get("descriptor_kind") != DESCRIPTOR_KIND:
+            raise ReferenceClientError("invalid descriptor_kind")
+        if descriptor.get("descriptor_version") is None:
+            raise ReferenceClientError("missing descriptor_version")
+        structured = descriptor.get("structured_input")
+        if not isinstance(structured, dict):
+            raise ReferenceClientError("invalid structured_input section")
+
+    def fetch_descriptor(self, descriptor_path: str) -> dict[str, Any]:
+        path = descriptor_path.strip()
+        if not path.startswith("/"):
+            path = f"/{path}"
+        request = Request(self._url(path), method="GET")
+        return self._read_json(request)
+
     def run_preflight(self, *, correlation_id: str | None = None) -> dict[str, Any]:
         path = f"/v1/demo/{self.config.vertical.strip().lower()}/preflight"
         payload: dict[str, str] = {
@@ -179,8 +202,10 @@ class ReferenceAgentClient:
         pointer_checked = False
         runtime_base_url = (self.config.base_url or "").strip() or None
         profile: dict[str, Any] | None = None
+        descriptor: dict[str, Any] | None = None
         preflight: dict[str, Any] | None = None
         profile_checked = False
+        descriptor_checked = False
         correlation_id = str(invoke_payload.get("correlation_id") or "").strip() or None
 
         try:
@@ -204,7 +229,14 @@ class ReferenceAgentClient:
                 operation=self.config.operation,
             )
 
-            invocation = interaction.get("invocation") or {}
+            descriptor_path = str(interaction.get("descriptor_path") or "").strip()
+            if not descriptor_path:
+                raise ReferenceClientError("descriptor_path missing from profile interaction")
+            descriptor = self.fetch_descriptor(descriptor_path)
+            self.validate_descriptor(descriptor)
+            descriptor_checked = True
+
+            invocation = interaction.get("invocation") or descriptor.get("invocation") or {}
             self.validate_invoke_target(invocation)
 
             preflight = self.run_preflight(correlation_id=correlation_id)
@@ -224,6 +256,7 @@ class ReferenceAgentClient:
                     pointer_checked=pointer_checked,
                     runtime_base_url=runtime_base_url,
                     profile_checked=profile_checked,
+                    descriptor_checked=descriptor_checked,
                     preflight_state=preflight_state or None,
                     correlation_id=correlation_id,
                     profile_version=profile_version if isinstance(profile_version, int) else None,
@@ -251,6 +284,7 @@ class ReferenceAgentClient:
                     pointer_checked=pointer_checked,
                     runtime_base_url=runtime_base_url,
                     profile_checked=profile_checked,
+                    descriptor_checked=descriptor_checked,
                     preflight_state=PREFLIGHT_READY,
                     correlation_id=correlation_id,
                     profile_version=profile_version if isinstance(profile_version, int) else None,
@@ -260,6 +294,7 @@ class ReferenceAgentClient:
                     ),
                     pointer=pointer,
                     profile=profile,
+                    descriptor=descriptor,
                     preflight=preflight,
                     error="gateway token missing",
                 )
@@ -279,24 +314,30 @@ class ReferenceAgentClient:
             trace_dict = dict(trace or {})
             if correlation_id and not trace_dict.get("correlation_id"):
                 trace_dict["correlation_id"] = correlation_id
+            native_external_identifier = native.get("external_identifier") or response.get(
+                "native_external_identifier"
+            )
             return ReferenceClientResult(
                 business_origin=business_origin,
                 pointer_checked=pointer_checked,
                 runtime_base_url=runtime_base_url,
                 profile_checked=profile_checked,
+                descriptor_checked=descriptor_checked,
                 preflight_state=PREFLIGHT_READY,
                 invoke_attempted=True,
                 transport_status=str(response.get("transport_status") or "") or None,
                 native_external_status=native.get("external_status"),
                 outcome_disposition=outcome.get("disposition"),
                 trace_reference=trace_dict,
-                reservation_id=response.get("reservation_id"),
+                native_external_identifier=str(native_external_identifier) if native_external_identifier else None,
+                reservation_id=response.get("reservation_id") or native_external_identifier,
                 correlation_id=correlation_id or trace_dict.get("correlation_id"),
                 profile_version=profile_version if isinstance(profile_version, int) else None,
                 runtime_version=str(runtime_version) if runtime_version else None,
                 execution_surface_revision=str(execution_surface_revision) if execution_surface_revision else None,
                 pointer=pointer,
                 profile=profile,
+                descriptor=descriptor,
                 preflight=preflight,
                 invoke_response=response,
             )
@@ -306,10 +347,12 @@ class ReferenceAgentClient:
                 pointer_checked=pointer_checked,
                 runtime_base_url=runtime_base_url,
                 profile_checked=profile_checked,
+                descriptor_checked=descriptor_checked,
                 preflight_state=(preflight or {}).get("preflight_state") if preflight else None,
                 correlation_id=correlation_id,
                 pointer=pointer,
                 profile=profile,
+                descriptor=descriptor,
                 preflight=preflight,
                 error=str(exc),
             )
@@ -321,10 +364,12 @@ class ReferenceAgentClient:
                 pointer_checked=pointer_checked,
                 runtime_base_url=runtime_base_url,
                 profile_checked=profile_checked,
+                descriptor_checked=descriptor_checked,
                 preflight_state=(preflight or {}).get("preflight_state") if preflight else None,
                 correlation_id=correlation_id,
                 pointer=pointer,
                 profile=profile,
+                descriptor=descriptor,
                 preflight=preflight,
                 error=message or f"HTTP {exc.code}",
             )

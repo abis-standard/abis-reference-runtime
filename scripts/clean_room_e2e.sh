@@ -22,7 +22,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "${DATA_DIR}"
-export PYTHONPATH="${ROOT}/runtime/src:${ROOT}/reference-business/controlled-reservation-simulator/src:${ROOT}"
+export PYTHONPATH="${ROOT}/runtime/src:${ROOT}/reference-business/controlled-reservation-simulator/src:${ROOT}/reference-business/controlled-commerce-simulator/src:${ROOT}"
 export PYTHONUNBUFFERED=1
 export ABIS_DEMO_GATEWAY_TOKEN="${TOKEN}"
 export ABIS_GATEWAY_MODE=EXTERNAL_TEST
@@ -103,6 +103,7 @@ PY
 )"
 
 grep -q "PROFILE: OK" "${CLEAN_ROOT}/client-base-url.txt"
+grep -q "DESCRIPTOR: OK" "${CLEAN_ROOT}/client-base-url.txt"
 grep -q "PREFLIGHT: PREFLIGHT_READY" "${CLEAN_ROOT}/client-base-url.txt"
 grep -q "INVOKE: ATTEMPTED" "${CLEAN_ROOT}/client-base-url.txt"
 grep -q "NATIVE RESULT: CONFIRMED" "${CLEAN_ROOT}/client-base-url.txt"
@@ -118,6 +119,34 @@ grep -q "INVOKE: ATTEMPTED" "${CLEAN_ROOT}/client-discovery.txt"
 grep -q "NATIVE RESULT: CONFIRMED" "${CLEAN_ROOT}/client-discovery.txt"
 grep -q "OUTCOME: NOT_EVALUATED" "${CLEAN_ROOT}/client-discovery.txt"
 grep -q "FINAL STATUS: PASS" "${CLEAN_ROOT}/client-discovery.txt"
+
+python3 "${ROOT}/scripts/reference_agent_client.py" \
+  --base-url "${BASE_URL}" \
+  --vertical shopping \
+  --operation submit_order \
+  --execution-class CONTROLLED_SIMULATOR \
+  --input "${ROOT}/examples/shopping_submit_order_normal.json" \
+  >"${CLEAN_ROOT}/client-shopping.txt"
+
+python3 "${ROOT}/scripts/reference_agent_client.py" \
+  --business-origin "${BUSINESS_ORIGIN}" \
+  --vertical shopping \
+  --operation submit_order \
+  --execution-class CONTROLLED_SIMULATOR \
+  --input "${ROOT}/examples/shopping_submit_order_normal.json" \
+  >"${CLEAN_ROOT}/client-shopping-discovery.txt"
+
+grep -q "DESCRIPTOR: OK" "${CLEAN_ROOT}/client-shopping.txt"
+grep -q "PREFLIGHT: PREFLIGHT_READY" "${CLEAN_ROOT}/client-shopping.txt"
+grep -q "NATIVE RESULT: ORDER_SUBMITTED" "${CLEAN_ROOT}/client-shopping.txt"
+grep -q "OUTCOME: NOT_EVALUATED" "${CLEAN_ROOT}/client-shopping.txt"
+grep -q "FINAL STATUS: PASS" "${CLEAN_ROOT}/client-shopping.txt"
+
+grep -q "DESCRIPTOR: OK" "${CLEAN_ROOT}/client-shopping-discovery.txt"
+grep -q "NATIVE RESULT: ORDER_SUBMITTED" "${CLEAN_ROOT}/client-shopping-discovery.txt"
+grep -q "FINAL STATUS: PASS" "${CLEAN_ROOT}/client-shopping-discovery.txt"
+
+curl -sf "${BASE_URL}/v1/reference-profile/interactions/shopping/submit_order" >/dev/null
 
 if [[ "${RES_COUNT}" != "1" ]]; then
   echo "clean-room: expected one reservation after idempotent replay, got ${RES_COUNT}" >&2
