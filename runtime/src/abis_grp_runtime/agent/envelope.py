@@ -8,9 +8,6 @@ from typing import Any, Mapping
 from abis_grp_runtime.agent.errors import AgentErrorEnvelope
 
 
-SUPPORTED_OPERATIONS = frozenset({"check_availability", "reserve", "modify", "cancel"})
-
-
 @dataclass(frozen=True)
 class AgentIdentity:
     """Implementation participant/client identity — not normative ABIS Participant."""
@@ -78,6 +75,7 @@ class AgentResponseEnvelope:
     execution_disposition: dict[str, Any]
     native_result: dict[str, Any] | None = None
     outcome_disposition: dict[str, Any] | None = None
+    execution_provenance: dict[str, Any] | None = None
     trace_reference: dict[str, Any] = field(default_factory=dict)
     error: AgentErrorEnvelope | None = None
 
@@ -91,6 +89,7 @@ class AgentResponseEnvelope:
             "execution_disposition": self.execution_disposition,
             "native_result": self.native_result,
             "outcome_disposition": self.outcome_disposition,
+            "execution_provenance": self.execution_provenance,
             "trace_reference": self.trace_reference,
         }
         if self.error is not None:

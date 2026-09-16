@@ -1,8 +1,24 @@
 # ABIS Reference Runtime
 
-**Developer Preview — v0.4.0**
+**Developer Preview — v0.5.0**
 
 Reference implementation for executing ABIS Business Interactions against controlled reference business systems.
+
+---
+
+## What's new in v0.5.0 (vs v0.4.0)
+
+| Area | v0.4.0 | v0.5.0 |
+| --- | --- | --- |
+| Invoke response | Top-level `reservation_id` / `crs_native_result` aliases | **Vertical-neutral** — canonical `native_result` only |
+| Execution evidence | Preflight `evidence` only | **`execution_provenance`** on Invoke (minimal audit metadata) |
+| Profile | `profile_version=2` with top-level `business_system` | `profile_version=3` — **per-interaction** `business_system` only |
+| Execution surface | `reference-execution-surface-2` | `reference-execution-surface-3` |
+| Descriptor | `descriptor_version=1` | unchanged (`descriptor_version=1`) |
+
+**Breaking Developer Preview change:** removed HTTP top-level aliases `reservation_id`, `crs_native_result`, and `native_external_identifier`. Use `native_result.external_identifier` and opaque `native_result.payload` instead.
+
+**Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · **no Internet-wide business discovery** · **REAL_EXECUTION PROHIBITED** · Native Result ≠ Business Outcome (`NOT_EVALUATED`).
 
 ---
 
@@ -76,7 +92,7 @@ The Reference Runtime Pointer is an **implementation-level, informative, referen
 
 ## Architecture
 
-### Discovery flow (v0.4.0)
+### Discovery flow (v0.5.0)
 
 ```text
 Known Business Origin
@@ -95,12 +111,12 @@ POST /v1/demo/{vertical}/preflight
       ↓
 POST profile-advertised invoke path (Bearer)
       ↓
-Native Business Result + trace_reference
+Native Business Result + execution_provenance + trace_reference
       ↓
 Outcome: NOT_EVALUATED
 ```
 
-Published interactions (v0.4.0):
+Published interactions (v0.5.0):
 
 - `restaurant` / `reserve` / `CONTROLLED_SIMULATOR`
 - `shopping` / `submit_order` / `CONTROLLED_SIMULATOR`
@@ -192,9 +208,9 @@ Example (abbreviated):
 ```json
 {
   "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 2,
-  "execution_surface_revision": "reference-execution-surface-2",
-  "runtime": { "name": "abis-reference-runtime", "version": "0.4.0" },
+  "profile_version": 3,
+  "execution_surface_revision": "reference-execution-surface-3",
+  "runtime": { "name": "abis-reference-runtime", "version": "0.5.0" },
   "authority": { "semantic": "NONE", "normative": "NONE" },
   "advertised_interactions": [
     {
@@ -202,14 +218,22 @@ Example (abbreviated):
       "operation": "reserve",
       "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
       "descriptor_path": "/v1/reference-profile/interactions/restaurant/reserve",
-      "invocation": { "method": "POST", "path": "/v1/demo/restaurant/invoke" }
+      "invocation": { "method": "POST", "path": "/v1/demo/restaurant/invoke" },
+      "business_system": {
+        "identifier": "abis-demo-restaurant-simulator",
+        "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
+      }
     },
     {
       "vertical": "shopping",
       "operation": "submit_order",
       "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
       "descriptor_path": "/v1/reference-profile/interactions/shopping/submit_order",
-      "invocation": { "method": "POST", "path": "/v1/demo/shopping/invoke" }
+      "invocation": { "method": "POST", "path": "/v1/demo/shopping/invoke" },
+      "business_system": {
+        "identifier": "abis-demo-commerce-simulator",
+        "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
+      }
     }
   ],
   "authorization": { "invoke": { "required": true, "scheme": "bearer" } },
@@ -295,7 +319,7 @@ Sequence:
 3. **Fetch Interaction Descriptor** — `GET` each interaction's `descriptor_path`
 4. **Preflight Interaction** — `POST /v1/demo/{vertical}/preflight`
 5. **Invoke Interaction** — profile/descriptor-provided relative path with Bearer auth
-6. **Inspect Native Result / Trace** — `native_result.external_status`, `outcome_disposition`, `trace_reference`
+6. **Inspect Native Result / Provenance / Trace** — `native_result`, `execution_provenance`, `outcome_disposition`, `trace_reference`
 
 `NATIVE RESULT: CONFIRMED` does **not** mean Business Outcome SUCCESS. The client does not assert conformance, certification, or trust.
 
@@ -331,7 +355,7 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json
 ```
 
-The same `reservation_id` is returned. `state.json` retains **one** reservation.
+The same `native_result.external_identifier` is returned. `state.json` retains **one** reservation.
 
 ---
 
@@ -339,7 +363,9 @@ The same `reservation_id` is returned. `state.json` retains **one** reservation.
 
 | Field | Example | Meaning |
 | --- | --- | --- |
-| `native_result.external_status` | `CONFIRMED` | Controlled reference business system returned a confirmed native reservation result |
+| `native_result.external_status` | `CONFIRMED` | Opaque native business-system observation (not ABIS Outcome) |
+| `native_result.external_identifier` | `TEST-RSV-…` | Opaque native reference (vertical-neutral envelope field) |
+| `execution_provenance` | `{ … }` | Implementation-level invoke audit metadata (not conformance) |
 | `outcome_disposition.disposition` | `NOT_EVALUATED` | Runtime does **not** perform normative ABIS Business Outcome evaluation |
 
 `CONFIRMED` does **not** mean ABIS Outcome Evaluation `SUCCESS`. These are separate layers.
@@ -388,4 +414,4 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Status
 
-**Developer Preview** — v0.4.0. Not for production use.
+**Developer Preview** — v0.5.0. Not for production use.

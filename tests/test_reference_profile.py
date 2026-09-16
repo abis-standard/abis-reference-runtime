@@ -75,7 +75,8 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
         self.assertEqual(body["runtime"]["version"], __version__)
         self.assertEqual(body["authority"]["semantic"], "NONE")
         self.assertEqual(body["authority"]["normative"], "NONE")
-        self.assertEqual(body["execution_surface_revision"], "reference-execution-surface-2")
+        self.assertEqual(body["execution_surface_revision"], "reference-execution-surface-3")
+        self.assertNotIn("business_system", body)
 
     def test_advertised_interactions_match_gateway_truth(self) -> None:
         _, body, _ = self._get("/v1/reference-profile")
@@ -89,6 +90,15 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
         self.assertEqual(item["execution_classes_allowed"], ["CONTROLLED_SIMULATOR"])
         self.assertEqual(item["invocation"]["method"], "POST")
         self.assertEqual(item["invocation"]["path"], "/v1/demo/restaurant/invoke")
+        self.assertEqual(
+            item["business_system"]["identifier"],
+            "abis-demo-restaurant-simulator",
+        )
+        shopping = next(i for i in interactions if i["vertical"] == "shopping")
+        self.assertEqual(
+            shopping["business_system"]["identifier"],
+            "abis-demo-commerce-simulator",
+        )
         self.assertNotIn("check_availability", json.dumps(interactions))
         self.assertNotIn("modify", json.dumps(interactions))
         self.assertNotIn("cancel", json.dumps(interactions))

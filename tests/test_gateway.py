@@ -100,7 +100,11 @@ class TestGatewayNormalSuccess(GatewayTestCase):
         self.assertEqual(body["correlation_id"], "gw-normal-success-001")
         self.assertEqual(body["native_result"]["external_status"], "CONFIRMED")
         self.assertEqual(body["outcome_disposition"]["disposition"], "NOT_EVALUATED")
-        self.assertIsNotNone(body.get("reservation_id"))
+        self.assertIsNotNone(body["native_result"]["external_identifier"])
+        self.assertNotIn("reservation_id", body)
+        self.assertNotIn("crs_native_result", body)
+        self.assertNotIn("native_external_identifier", body)
+        self.assertIn("execution_provenance", body)
         self.assertNotIn("outcome_evaluation", body)
         self.assertNotIn("evidence_trace", body)
 
@@ -126,7 +130,10 @@ class TestGatewayNormalSuccess(GatewayTestCase):
         status2, body2 = self._post("/v1/demo/restaurant/invoke", _normal_success_payload())
         self.assertEqual(status1, 200)
         self.assertEqual(status2, 200)
-        self.assertEqual(body1["reservation_id"], body2["reservation_id"])
+        self.assertEqual(
+            body1["native_result"]["external_identifier"],
+            body2["native_result"]["external_identifier"],
+        )
         state = json.loads((Path(self.tmp.name) / "state.json").read_text(encoding="utf-8"))
         self.assertEqual(len(state["reservations"]), 1)
 

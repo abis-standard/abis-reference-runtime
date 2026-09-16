@@ -1,10 +1,10 @@
 {
   "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 2,
-  "execution_surface_revision": "reference-execution-surface-2",
+  "profile_version": 3,
+  "execution_surface_revision": "reference-execution-surface-3",
   "runtime": {
     "name": "abis-reference-runtime",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "authority": {
     "semantic": "NONE",
@@ -45,10 +45,6 @@
       "required": true,
       "scheme": "bearer"
     }
-  },
-  "business_system": {
-    "identifier": "abis-demo-restaurant-simulator",
-    "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
   },
   "execution_boundary": {
     "real_execution": "PROHIBITED"

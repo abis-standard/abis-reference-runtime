@@ -1,1 +1,154 @@
-{"agent_identity": {"agent_id": "reference-agent-001", "agent_type": "reference-agent"}, "authorization_disposition": {"reason": "Permission token accepted", "state": "AUTHORIZED"}, "correlation_id": "reference-first-run-001", "crs_native_result": {"actual": {"customer_reference": "TEST-CUST-REFERENCE-001", "date": "2026-09-12", "party_size": 4, "reservation_id": "TEST-RSV-807F9FEB0C0E", "seating_type": "PRIVATE_ROOM", "status": "CONFIRMED", "time": "20:00"}, "business_system": "abis-demo-restaurant-simulator", "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE", "error": null, "idempotency_key": "idem-reference-first-run-001", "idempotent_replay": false, "operation": "reserve", "reason": null, "requested": {"customer_reference": "TEST-CUST-REFERENCE-001", "date": "2026-09-12", "party_size": 4, "seating_type": "PRIVATE_ROOM", "time": "20:00"}, "reservation_id": "TEST-RSV-807F9FEB0C0E", "restaurant": "ABIS Demo Restaurant", "semantic_authority": "NONE", "status": "CONFIRMED", "test_scenario": "NORMAL_SUCCESS", "timestamp": "2026-09-14T23:40:38Z", "transport_ok": true}, "execution_disposition": {"execution_class": "CONTROLLED_SIMULATOR", "policy": "ALLOW", "reason": "CONTROLLED_SIMULATOR permitted under M-201 mock-only baseline"}, "native_result": {"error": null, "external_identifier": "TEST-RSV-807F9FEB0C0E", "external_status": "CONFIRMED", "payload": {"business_system": "abis-demo-restaurant-simulator", "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE", "crs_native_result": {"actual": {"customer_reference": "TEST-CUST-REFERENCE-001", "date": "2026-09-12", "party_size": 4, "reservation_id": "TEST-RSV-807F9FEB0C0E", "seating_type": "PRIVATE_ROOM", "status": "CONFIRMED", "time": "20:00"}, "business_system": "abis-demo-restaurant-simulator", "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE", "error": null, "idempotency_key": "idem-reference-first-run-001", "idempotent_replay": false, "operation": "reserve", "reason": null, "requested": {"customer_reference": "TEST-CUST-REFERENCE-001", "date": "2026-09-12", "party_size": 4, "seating_type": "PRIVATE_ROOM", "time": "20:00"}, "reservation_id": "TEST-RSV-807F9FEB0C0E", "restaurant": "ABIS Demo Restaurant", "semantic_authority": "NONE", "status": "CONFIRMED", "test_scenario": "NORMAL_SUCCESS", "timestamp": "2026-09-14T23:40:38Z", "transport_ok": true}, "operation": "reserve", "semantic_authority": "NONE"}, "source": "restaurant-simulator", "technical_status": "TRANSPORT_OK", "timing_ms": null}, "outcome_disposition": {"disposition": "NOT_EVALUATED", "outcome_ref": {"interaction_id": "impl-interaction-reference-first-run-001", "native_result_observed": true}, "reason": "M-201 stub \u2014 outcome determination deferred"}, "request_id": "faf1ed3d-9cd9-41bd-a114-c56adfb85916", "reservation_id": "TEST-RSV-807F9FEB0C0E", "trace_reference": {"correlation_id": "reference-first-run-001", "events": [{"detail": {"agent_id": "reference-agent-001"}, "disposition": "ACCEPTED", "phase": "context"}, {"detail": {"reason": "Permission token accepted"}, "disposition": "AUTHORIZED", "phase": "authorization"}, {"detail": {"interaction_id": "impl-interaction-reference-first-run-001"}, "disposition": "ACCEPTED", "phase": "semantic_boundary"}, {"detail": {"execution_class": "CONTROLLED_SIMULATOR"}, "disposition": "ALLOW", "phase": "execution_disposition"}, {"detail": {"reason": "mock-only firewall pass"}, "disposition": "PASS", "phase": "control_plane"}, {"detail": {"connector_id": "restaurant-simulator", "operation": "reserve"}, "disposition": "START", "phase": "connector_attempt"}, {"detail": {"external_status": "CONFIRMED", "source": "restaurant-simulator"}, "disposition": "TRANSPORT_OK", "phase": "native_result"}, {"detail": {"reason": "M-201 stub \u2014 outcome determination deferred"}, "disposition": "NOT_EVALUATED", "phase": "outcome_interpreter"}], "request_id": "faf1ed3d-9cd9-41bd-a114-c56adfb85916"}, "transport_status": "ACCEPTED"}
+{
+  "agent_identity": {
+    "agent_id": "reference-agent-001",
+    "agent_type": "reference-agent"
+  },
+  "authorization_disposition": {
+    "reason": "Permission token accepted",
+    "state": "AUTHORIZED"
+  },
+  "correlation_id": "reference-first-run-001",
+  "execution_disposition": {
+    "execution_class": "CONTROLLED_SIMULATOR",
+    "policy": "ALLOW",
+    "reason": "CONTROLLED_SIMULATOR permitted under M-201 mock-only baseline"
+  },
+  "execution_provenance": {
+    "business_system": {
+      "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE",
+      "identifier": "abis-demo-restaurant-simulator"
+    },
+    "descriptor_path": "/v1/reference-profile/interactions/restaurant/reserve",
+    "descriptor_version": 1,
+    "execution_surface_revision": "reference-execution-surface-3",
+    "interaction": {
+      "operation": "reserve",
+      "vertical": "restaurant"
+    },
+    "profile_version": 3,
+    "runtime": {
+      "name": "abis-reference-runtime",
+      "version": "0.5.0"
+    }
+  },
+  "native_result": {
+    "error": null,
+    "external_identifier": "TEST-RSV-EDFB22556122",
+    "external_status": "CONFIRMED",
+    "payload": {
+      "business_system": "abis-demo-restaurant-simulator",
+      "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE",
+      "crs_native_result": {
+        "actual": {
+          "customer_reference": "TEST-CUST-REFERENCE-001",
+          "date": "2026-09-12",
+          "party_size": 4,
+          "reservation_id": "TEST-RSV-EDFB22556122",
+          "seating_type": "PRIVATE_ROOM",
+          "status": "CONFIRMED",
+          "time": "20:00"
+        },
+        "business_system": "abis-demo-restaurant-simulator",
+        "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE",
+        "error": null,
+        "idempotency_key": "idem-reference-first-run-001",
+        "idempotent_replay": false,
+        "operation": "reserve",
+        "reason": null,
+        "requested": {
+          "customer_reference": "TEST-CUST-REFERENCE-001",
+          "date": "2026-09-12",
+          "party_size": 4,
+          "seating_type": "PRIVATE_ROOM",
+          "time": "20:00"
+        },
+        "reservation_id": "TEST-RSV-EDFB22556122",
+        "restaurant": "ABIS Demo Restaurant",
+        "semantic_authority": "NONE",
+        "status": "CONFIRMED",
+        "test_scenario": "NORMAL_SUCCESS",
+        "timestamp": "2026-09-16T06:41:48Z",
+        "transport_ok": true
+      },
+      "operation": "reserve",
+      "semantic_authority": "NONE"
+    },
+    "source": "restaurant-simulator",
+    "technical_status": "TRANSPORT_OK",
+    "timing_ms": null
+  },
+  "outcome_disposition": {
+    "disposition": "NOT_EVALUATED",
+    "outcome_ref": {
+      "interaction_id": "impl-interaction-reference-first-run-001",
+      "native_result_observed": true
+    },
+    "reason": "M-201 stub \u2014 outcome determination deferred"
+  },
+  "request_id": "419d459c-0259-4ae3-8804-8c697c000e0d",
+  "trace_reference": {
+    "correlation_id": "reference-first-run-001",
+    "events": [
+      {
+        "detail": {
+          "agent_id": "reference-agent-001"
+        },
+        "disposition": "ACCEPTED",
+        "phase": "context"
+      },
+      {
+        "detail": {
+          "reason": "Permission token accepted"
+        },
+        "disposition": "AUTHORIZED",
+        "phase": "authorization"
+      },
+      {
+        "detail": {
+          "interaction_id": "impl-interaction-reference-first-run-001"
+        },
+        "disposition": "ACCEPTED",
+        "phase": "semantic_boundary"
+      },
+      {
+        "detail": {
+          "execution_class": "CONTROLLED_SIMULATOR"
+        },
+        "disposition": "ALLOW",
+        "phase": "execution_disposition"
+      },
+      {
+        "detail": {
+          "reason": "mock-only firewall pass"
+        },
+        "disposition": "PASS",
+        "phase": "control_plane"
+      },
+      {
+        "detail": {
+          "connector_id": "restaurant-simulator",
+          "operation": "reserve"
+        },
+        "disposition": "START",
+        "phase": "connector_attempt"
+      },
+      {
+        "detail": {
+          "external_status": "CONFIRMED",
+          "source": "restaurant-simulator"
+        },
+        "disposition": "TRANSPORT_OK",
+        "phase": "native_result"
+      },
+      {
+        "detail": {
+          "reason": "M-201 stub \u2014 outcome determination deferred"
+        },
+        "disposition": "NOT_EVALUATED",
+        "phase": "outcome_interpreter"
+      }
+    ],
+    "request_id": "419d459c-0259-4ae3-8804-8c697c000e0d"
+  },
+  "transport_status": "ACCEPTED"
+}

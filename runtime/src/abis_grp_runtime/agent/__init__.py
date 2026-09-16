@@ -5,8 +5,8 @@ from abis_grp_runtime.agent.envelope import (
     AgentIdentity,
     AgentRequestEnvelope,
     AgentResponseEnvelope,
-    SUPPORTED_OPERATIONS,
 )
+from abis_grp_runtime.agent.execution_provenance import build_execution_provenance
 from abis_grp_runtime.agent.errors import AgentContractErrorCode, AgentErrorEnvelope
 from abis_grp_runtime.discovery import (
     POINTER_KIND,
@@ -46,7 +46,7 @@ __all__ = [
     "ReferenceClientConfig",
     "ReferenceClientError",
     "ReferenceClientResult",
-    "SUPPORTED_OPERATIONS",
+    "build_execution_provenance",
     "deserialize_request",
     "deserialize_response",
     "gateway_token_from_env",

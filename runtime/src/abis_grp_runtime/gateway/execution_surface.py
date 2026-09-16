@@ -7,7 +7,7 @@ from typing import Any
 
 from abis_grp_runtime.registry.interaction_registry import RegisteredInteraction, require_active_registry
 
-EXECUTION_SURFACE_REVISION = "reference-execution-surface-2"
+EXECUTION_SURFACE_REVISION = "reference-execution-surface-3"
 PUBLIC_EXECUTION_CLASSES: frozenset[str] = frozenset({"CONTROLLED_SIMULATOR"})
 
 

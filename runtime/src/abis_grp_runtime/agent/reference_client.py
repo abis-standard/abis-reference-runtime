@@ -63,7 +63,6 @@ class ReferenceClientResult:
     outcome_disposition: str | None = None
     trace_reference: dict[str, Any] | None = None
     native_external_identifier: str | None = None
-    reservation_id: str | None = None
     correlation_id: str | None = None
     profile_version: int | None = None
     runtime_version: str | None = None
@@ -314,9 +313,7 @@ class ReferenceAgentClient:
             trace_dict = dict(trace or {})
             if correlation_id and not trace_dict.get("correlation_id"):
                 trace_dict["correlation_id"] = correlation_id
-            native_external_identifier = native.get("external_identifier") or response.get(
-                "native_external_identifier"
-            )
+            native_external_identifier = native.get("external_identifier")
             return ReferenceClientResult(
                 business_origin=business_origin,
                 pointer_checked=pointer_checked,
@@ -330,7 +327,6 @@ class ReferenceAgentClient:
                 outcome_disposition=outcome.get("disposition"),
                 trace_reference=trace_dict,
                 native_external_identifier=str(native_external_identifier) if native_external_identifier else None,
-                reservation_id=response.get("reservation_id") or native_external_identifier,
                 correlation_id=correlation_id or trace_dict.get("correlation_id"),
                 profile_version=profile_version if isinstance(profile_version, int) else None,
                 runtime_version=str(runtime_version) if runtime_version else None,

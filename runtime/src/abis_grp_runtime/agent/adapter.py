@@ -79,6 +79,7 @@ def _error_response(
         },
         native_result=None,
         outcome_disposition=None,
+        execution_provenance=None,
         trace_reference={"correlation_id": correlation_id, "request_id": request_id},
         error=error,
     )
@@ -95,7 +96,12 @@ class ExternalAgentAdapter:
     def __init__(self, runtime: RuntimeCore | None = None) -> None:
         self._runtime = runtime or RuntimeCore()
 
-    def invoke(self, request: AgentRequestEnvelope) -> AgentResponseEnvelope:
+    def invoke(
+        self,
+        request: AgentRequestEnvelope,
+        *,
+        execution_provenance: dict[str, Any] | None = None,
+    ) -> AgentResponseEnvelope:
         request_id = request.request_id or str(uuid4())
         correlation_id = request.correlation_id or str(uuid4())
 
@@ -230,5 +236,6 @@ class ExternalAgentAdapter:
             },
             native_result=_native_result_to_dict(pipeline.native_result),
             outcome_disposition=outcome_dict,
+            execution_provenance=execution_provenance,
             trace_reference=pipeline.trace.to_dict(),
         )

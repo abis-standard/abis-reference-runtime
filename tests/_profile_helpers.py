@@ -9,7 +9,7 @@ from abis_grp_runtime.gateway.reference_profile import PROFILE_KIND
 def valid_profile(*, invoke_path: str = "/v1/demo/restaurant/invoke") -> dict:
     return {
         "profile_kind": PROFILE_KIND,
-        "profile_version": 2,
+        "profile_version": 3,
         "advertised_interactions": [
             {
                 "vertical": "restaurant",

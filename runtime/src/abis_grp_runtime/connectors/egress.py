@@ -12,7 +12,7 @@ class EgressDecision(str, Enum):
     DENY = "DENY"
 
 
-ALLOWED_SIMULATOR_TARGET = "controlled-reservation-simulator"
+ALLOWED_SIMULATOR_TARGET = "controlled-business-simulator"
 ALLOWED_SIMULATOR_HOSTS = frozenset({"127.0.0.1", "localhost"})
 
 
@@ -25,9 +25,9 @@ class EgressVerdict:
 
 class SimulatorEgressFirewall:
     """
-    Connector may access ONLY the Controlled Reservation Simulator.
+    Connector may access ONLY approved controlled business simulators.
 
-    REAL RESTAURANT API · arbitrary URL · unapproved host · unknown target → DENY.
+    REAL EXTERNAL API · arbitrary URL · unapproved host · unknown target → DENY.
     """
 
     def evaluate_target(self, target: str) -> EgressVerdict:
@@ -49,7 +49,13 @@ class SimulatorEgressFirewall:
             if host not in ALLOWED_SIMULATOR_HOSTS:
                 return EgressVerdict(EgressDecision.DENY, url, "unapproved host denied")
             path = parsed.path or ""
-            if "controlled-reservation-simulator" not in path and "/reservations" not in path:
+            approved_paths = (
+                "controlled-business-simulator",
+                "controlled-reservation-simulator",
+                "controlled-commerce-simulator",
+                "/reservations",
+            )
+            if not any(marker in path for marker in approved_paths):
                 return EgressVerdict(EgressDecision.DENY, url, "unapproved path denied")
         return self.evaluate_target(ALLOWED_SIMULATOR_TARGET)
 

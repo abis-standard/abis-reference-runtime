@@ -155,7 +155,7 @@ class TestReferenceClientPositiveE2E(GatewayServerTestCase):
         second = client.execute(payload)
         self.assertTrue(first.invoke_attempted)
         self.assertTrue(second.invoke_attempted)
-        self.assertEqual(first.reservation_id, second.reservation_id)
+        self.assertEqual(first.native_external_identifier, second.native_external_identifier)
         self.assertEqual(self._reservation_count(), 1)
 
 

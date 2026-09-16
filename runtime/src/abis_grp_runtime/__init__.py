@@ -10,7 +10,7 @@ from abis_grp_runtime.agent import (
 from abis_grp_runtime.connectors import RestaurantSimulatorConnector, SimulatorEgressFirewall
 from abis_grp_runtime.core import RuntimeCore, RuntimePipelineResult
 from abis_grp_runtime.context import RuntimeRequestContext
-from abis_grp_runtime.e2e import GrokE2EResponse, GrokE2EService
+from abis_grp_runtime.e2e import GrokE2EService
 from abis_grp_runtime.gateway import (
     GatewayConfig,
     GatewayError,
@@ -35,7 +35,6 @@ __all__ = [
     "PROFILE_KIND",
     "PROFILE_VERSION",
     "REFERENCE_PROFILE_PATH",
-    "GrokE2EResponse",
     "GrokE2EService",
     "NativeResultEnvelope",
     "RestaurantSimulatorConnector",
