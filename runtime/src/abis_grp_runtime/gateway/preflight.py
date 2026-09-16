@@ -6,14 +6,16 @@ import re
 from typing import Any
 
 from abis_grp_runtime.gateway.config import GatewayConfig
-from abis_grp_runtime.gateway.execution_surface import find_advertised_interaction
+from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION, find_advertised_interaction
+from abis_grp_runtime.gateway.reference_profile import PROFILE_VERSION
+from abis_grp_runtime.version import __version__ as RUNTIME_VERSION
 
 PREFLIGHT_READY = "PREFLIGHT_READY"
 PREFLIGHT_NOT_ADVERTISED = "PREFLIGHT_NOT_ADVERTISED"
 PREFLIGHT_EXECUTION_DENIED = "PREFLIGHT_EXECUTION_DENIED"
 PREFLIGHT_INVALID_REQUEST = "PREFLIGHT_INVALID_REQUEST"
 
-ALLOWED_PREFLIGHT_KEYS = frozenset({"operation", "execution_class"})
+ALLOWED_PREFLIGHT_KEYS = frozenset({"operation", "execution_class", "correlation_id"})
 
 URL_PATTERN = re.compile(r"(?i)(https?://|file://|ftp://|\\\\)")
 
@@ -66,10 +68,17 @@ def parse_preflight_payload(data: Any, *, vertical: str) -> tuple[dict[str, str]
             operation=str(operation_raw).strip().lower(),
         )
 
-    return {
+    parsed: dict[str, str] = {
         "operation": str(operation_raw).strip().lower(),
         "execution_class": str(execution_raw).strip().upper(),
-    }, None
+    }
+    correlation_raw = data.get("correlation_id")
+    if correlation_raw is not None:
+        correlation = str(correlation_raw).strip()
+        if not correlation:
+            return None, _invalid_response(vertical=vertical_norm)
+        parsed["correlation_id"] = correlation
+    return parsed, None
 
 
 def _normalize_execution(value: Any) -> str | None:
@@ -79,16 +88,30 @@ def _normalize_execution(value: Any) -> str | None:
     return text or None
 
 
+def _evidence_metadata(correlation_id: str | None = None) -> dict[str, Any]:
+    """Implementation-level preflight evidence — not normative ABIS semantics."""
+    evidence: dict[str, Any] = {
+        "runtime_version": RUNTIME_VERSION,
+        "profile_version": PROFILE_VERSION,
+        "execution_surface_revision": EXECUTION_SURFACE_REVISION,
+    }
+    if correlation_id:
+        evidence["correlation_id"] = correlation_id
+    return evidence
+
+
 def evaluate_preflight(
     config: GatewayConfig,
     *,
     vertical: str,
     operation: str,
     execution_class: str,
+    correlation_id: str | None = None,
 ) -> dict[str, Any]:
     """Evaluate against canonical reference execution surface."""
     _ = config  # reserved for future mode/bind-specific preflight fields
     vertical_norm = vertical.strip().lower()
+    evidence = _evidence_metadata(correlation_id)
     matched = find_advertised_interaction(vertical_norm, operation)
 
     if matched is None:
@@ -98,6 +121,7 @@ def evaluate_preflight(
             "operation": operation,
             "execution_class": execution_class,
             "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+            "evidence": evidence,
         }
 
     if execution_class not in matched.execution_classes_allowed:
@@ -107,6 +131,7 @@ def evaluate_preflight(
             "operation": operation,
             "execution_class": execution_class,
             "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+            "evidence": evidence,
         }
 
     return {
@@ -116,4 +141,5 @@ def evaluate_preflight(
         "execution_class": execution_class,
         "invocation": matched.to_dict()["invocation"],
         "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+        "evidence": evidence,
     }

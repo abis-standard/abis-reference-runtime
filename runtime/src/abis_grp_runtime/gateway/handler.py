@@ -179,6 +179,7 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
             vertical=vertical,
             operation=parsed["operation"],
             execution_class=parsed["execution_class"],
+            correlation_id=parsed.get("correlation_id"),
         )
         self._send_json(200, body)
 

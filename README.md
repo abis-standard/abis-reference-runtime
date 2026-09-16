@@ -1,8 +1,24 @@
 # ABIS Reference Runtime
 
-**Developer Preview — v0.2.0**
+**Developer Preview — v0.3.0**
 
 Reference implementation for executing ABIS Business Interactions against a controlled reference business system.
+
+---
+
+## What's new in v0.3.0 (vs v0.2.0)
+
+| Area | v0.2.0 | v0.3.0 |
+| --- | --- | --- |
+| Business → Runtime discovery | Runtime Base URL required | Reference Runtime Pointer from a **known Business Origin** |
+| Pointer path | — | `/.well-known/abis-reference-runtime` (reference-implementation scoped) |
+| Agent flow | Base URL → Profile → Preflight → Invoke | Business Origin → Pointer → Runtime → Profile → Preflight → Invoke |
+| Evidence portability | `trace_reference` on invoke only | Preflight `evidence` metadata + cross-phase correlation binding |
+| Execution surface revision | — | `execution_surface_revision` in Profile and Preflight evidence |
+
+**Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · **no Internet-wide business discovery**.
+
+The Reference Runtime Pointer is an **implementation-level, informative, reference-only** locator. It is **not** a normative ABIS discovery protocol and **not** `/.well-known/abis`.
 
 ---
 
@@ -13,7 +29,7 @@ Reference implementation for executing ABIS Business Interactions against a cont
 | Runtime surface discovery | Manual curl / README | `GET /v1/reference-profile` (Reference Runtime Profile) |
 | Pre-invoke check | None | `POST /v1/demo/{vertical}/preflight` (Interaction Preflight) |
 | Agent-side flow | Manual steps | Reference Agent Client (Profile → Preflight → Invoke) |
-| Discover Runtime Surface | Not machine-readable | From a **known base URL** only — not Internet-wide discovery |
+| Inspect Runtime Surface | Not machine-readable | From a **known Runtime base URL** — not Internet-wide discovery |
 | Public execution truth | Scattered gateway constants | Single `ReferenceExecutionSurface` drives Profile, Preflight, Invoke validation, and Health |
 
 **Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · no Internet-wide business discovery.
@@ -41,6 +57,28 @@ Reference implementation for executing ABIS Business Interactions against a cont
 ---
 
 ## Architecture
+
+### Discovery flow (v0.3.0)
+
+```text
+Known Business Origin
+      ↓
+GET /.well-known/abis-reference-runtime
+      ↓
+Reference Runtime Pointer
+      ↓
+Runtime Base URL
+      ↓
+GET /v1/reference-profile
+      ↓
+POST /v1/demo/{vertical}/preflight
+      ↓
+POST profile-advertised invoke path (Bearer)
+      ↓
+Native Business Result + trace_reference
+```
+
+### Direct Runtime flow (v0.2.0+, still supported)
 
 ```text
 Known Runtime Base URL
@@ -74,7 +112,7 @@ FoundationTrace
 HTTP Response
 ```
 
-The Reference Agent Client automates the Profile → Preflight → Invoke sequence. It does **not** discover ABIS businesses on the Internet.
+The Reference Agent Client automates discovery (optional) → Profile → Preflight → Invoke. It begins from a **known Business Origin** or **known Runtime Base URL**. It does **not** perform Internet-wide business search or registry lookup.
 
 ---
 
@@ -128,7 +166,7 @@ Example (abbreviated):
 {
   "profile_kind": "abis-reference-runtime-profile",
   "profile_version": 1,
-  "runtime": { "name": "abis-reference-runtime", "version": "0.2.0" },
+  "runtime": { "name": "abis-reference-runtime", "version": "0.3.0" },
   "authority": { "semantic": "NONE", "normative": "NONE" },
   "advertised_interactions": [
     {
@@ -160,14 +198,44 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/preflight \
 
 Example response: `examples/restaurant_reserve_preflight_response.json`
 
-### 6. Reference Agent Client (Discover Runtime Surface → Preflight → Invoke)
+### 6. Serve a synthetic Reference Business Origin (v0.3.0)
 
-This repository includes a **provider-neutral Reference Agent Client**. It does **not** perform Internet-wide business discovery. It starts from a **known Runtime base URL** and machine-reads the advertised interaction surface before attempting invocation.
+In a second terminal (after the gateway is running):
+
+```bash
+export ABIS_ORIGIN_QUIET=1
+python3 scripts/serve_reference_business_origin.py \
+  --runtime-base-url http://127.0.0.1:9080 \
+  --port 9081
+```
+
+This serves an implementation-level **Reference Runtime Pointer** at:
+
+`http://127.0.0.1:9081/.well-known/abis-reference-runtime`
+
+See: `examples/reference_runtime_pointer.json`
+
+### 7. Reference Agent Client (Business Origin or Base URL → Preflight → Invoke)
+
+This repository includes a **provider-neutral Reference Agent Client**. It does **not** perform Internet-wide business discovery.
+
+**Discovery flow (no manual Runtime Base URL):**
 
 ```bash
 export ABIS_DEMO_GATEWAY_TOKEN="$(
 python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
 )"
+python3 scripts/reference_agent_client.py \
+  --business-origin http://127.0.0.1:9081 \
+  --vertical restaurant \
+  --operation reserve \
+  --execution-class CONTROLLED_SIMULATOR \
+  --input examples/restaurant_reserve_normal.json
+```
+
+**Direct Runtime flow (backward compatible):**
+
+```bash
 python3 scripts/reference_agent_client.py \
   --base-url http://127.0.0.1:9080 \
   --vertical restaurant \
@@ -178,16 +246,17 @@ python3 scripts/reference_agent_client.py \
 
 Sequence:
 
-1. **Discover Runtime Surface** — `GET /v1/reference-profile`
-2. **Preflight Interaction** — `POST /v1/demo/{vertical}/preflight`
-3. **Invoke Interaction** — profile-provided relative path with Bearer auth
-4. **Inspect Native Result / Trace** — `native_result.external_status` and `outcome_disposition`
+1. **Business Origin discovery (optional)** — `GET /.well-known/abis-reference-runtime`
+2. **Inspect Runtime Surface** — `GET /v1/reference-profile`
+3. **Preflight Interaction** — `POST /v1/demo/{vertical}/preflight`
+4. **Invoke Interaction** — profile-provided relative path with Bearer auth
+5. **Inspect Native Result / Trace** — `native_result.external_status`, `outcome_disposition`, `trace_reference`
 
 `NATIVE RESULT: CONFIRMED` does **not** mean Business Outcome SUCCESS. The client does not assert conformance, certification, or trust.
 
 See: `examples/reference_agent_request.json`
 
-### 7. Send a Business Interaction (manual curl)
+### 8. Send a Business Interaction (manual curl)
 
 In a second terminal:
 
@@ -198,7 +267,7 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json | python3 -m json.tool
 ```
 
-### 8. Inspect business state
+### 9. Inspect business state
 
 ```bash
 cat ./data/state.json | python3 -m json.tool
@@ -273,4 +342,4 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Status
 
-**Developer Preview** — v0.2.0. Not for production use.
+**Developer Preview** — v0.3.0. Not for production use.

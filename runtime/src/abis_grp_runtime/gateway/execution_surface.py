@@ -9,6 +9,9 @@ PUBLIC_VERTICALS: frozenset[str] = frozenset({"restaurant"})
 PUBLIC_OPERATIONS: frozenset[str] = frozenset({"reserve"})
 PUBLIC_EXECUTION_CLASSES: frozenset[str] = frozenset({"CONTROLLED_SIMULATOR"})
 
+# Implementation-level surface revision — not ABIS semantic/conformance versioning.
+EXECUTION_SURFACE_REVISION = "restaurant-reserve-1"
+
 # Historical gateway validation aliases — derived from the same surface definition.
 ALLOWED_VERTICALS_M206B = PUBLIC_VERTICALS
 ALLOWED_OPERATIONS = PUBLIC_OPERATIONS

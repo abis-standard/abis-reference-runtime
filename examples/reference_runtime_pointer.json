@@ -1,0 +1,11 @@
+{
+  "authority": {
+    "normative": "NONE",
+    "semantic": "NONE"
+  },
+  "pointer_kind": "abis-reference-runtime-pointer",
+  "pointer_version": 1,
+  "runtime": {
+    "base_url": "http://127.0.0.1:9080"
+  }
+}

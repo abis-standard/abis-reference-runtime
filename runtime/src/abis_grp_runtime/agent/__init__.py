@@ -8,6 +8,14 @@ from abis_grp_runtime.agent.envelope import (
     SUPPORTED_OPERATIONS,
 )
 from abis_grp_runtime.agent.errors import AgentContractErrorCode, AgentErrorEnvelope
+from abis_grp_runtime.discovery import (
+    POINTER_KIND,
+    POINTER_WELL_KNOWN_PATH,
+    build_reference_runtime_pointer,
+    resolve_runtime_base_url,
+    validate_pointer,
+    validate_runtime_base_url,
+)
 from abis_grp_runtime.agent.reference_client import (
     ReferenceAgentClient,
     ReferenceClientConfig,
@@ -26,6 +34,8 @@ from abis_grp_runtime.agent.serialization import (
 from abis_grp_runtime.agent.validation import validate_agent_request
 
 __all__ = [
+    "POINTER_KIND",
+    "POINTER_WELL_KNOWN_PATH",
     "AgentContractErrorCode",
     "AgentErrorEnvelope",
     "AgentIdentity",
@@ -45,4 +55,8 @@ __all__ = [
     "serialize_request",
     "serialize_response",
     "validate_agent_request",
+    "validate_pointer",
+    "validate_runtime_base_url",
+    "build_reference_runtime_pointer",
+    "resolve_runtime_base_url",
 ]

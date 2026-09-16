@@ -6,7 +6,10 @@ from typing import Any
 
 from abis_grp_runtime.version import __version__ as RUNTIME_VERSION
 from abis_grp_runtime.gateway.config import GatewayConfig
-from abis_grp_runtime.gateway.execution_surface import advertised_interactions
+from abis_grp_runtime.gateway.execution_surface import (
+    EXECUTION_SURFACE_REVISION,
+    advertised_interactions,
+)
 
 PROFILE_KIND = "abis-reference-runtime-profile"
 PROFILE_VERSION = 1
@@ -38,6 +41,7 @@ def build_reference_runtime_profile(config: GatewayConfig) -> dict[str, Any]:
             "identifier": BUSINESS_SYSTEM_IDENTIFIER,
             "classification": BUSINESS_SYSTEM_CLASSIFICATION,
         },
+        "execution_surface_revision": EXECUTION_SURFACE_REVISION,
         "advertised_interactions": advertised_interactions(),
         "authorization": {
             "invoke": {

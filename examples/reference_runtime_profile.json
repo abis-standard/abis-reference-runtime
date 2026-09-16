@@ -29,6 +29,7 @@
   "execution_boundary": {
     "real_execution": "PROHIBITED"
   },
+  "execution_surface_revision": "restaurant-reserve-1",
   "health": {
     "method": "GET",
     "path": "/health"
@@ -40,6 +41,6 @@
   "profile_version": 1,
   "runtime": {
     "name": "abis-reference-runtime",
-    "version": "0.2.0"
+    "version": "0.3.0"
   }
 }

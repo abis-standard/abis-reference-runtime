@@ -114,7 +114,7 @@ def validate_vertical(vertical: str | None) -> GatewayError | None:
     if normalized not in ALLOWED_VERTICALS_M206B:
         return GatewayError(
             GatewayErrorCode.VERTICAL_DENIED,
-            "vertical not enabled for M-206B",
+            "vertical not enabled for reference execution surface",
             http_status=403,
             detail={"vertical": normalized, "allowed": sorted(ALLOWED_VERTICALS_M206B)},
         )

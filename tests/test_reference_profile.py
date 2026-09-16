@@ -77,6 +77,7 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
         self.assertEqual(body["runtime"]["version"], __version__)
         self.assertEqual(body["authority"]["semantic"], "NONE")
         self.assertEqual(body["authority"]["normative"], "NONE")
+        self.assertEqual(body["execution_surface_revision"], "restaurant-reserve-1")
 
     def test_advertised_interactions_match_gateway_truth(self) -> None:
         _, body, _ = self._get("/v1/reference-profile")

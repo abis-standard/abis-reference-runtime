@@ -88,6 +88,15 @@ class TestPreflightStates(PreflightTestCase):
         self.assertEqual(body["execution_class"], "CONTROLLED_SIMULATOR")
         self.assertEqual(body["invocation"]["path"], "/v1/demo/restaurant/invoke")
         self.assertFalse(body["disclaimer"]["business_outcome_prediction"])
+        evidence = body["evidence"]
+        self.assertIsNotNone(evidence.get("runtime_version"))
+        self.assertEqual(evidence.get("profile_version"), 1)
+        self.assertEqual(evidence.get("execution_surface_revision"), "restaurant-reserve-1")
+
+    def test_correlation_id_echoed_in_evidence(self) -> None:
+        payload = {**_ready_payload(), "correlation_id": "preflight-correlation-001"}
+        _, body = self._post_preflight("restaurant", payload)
+        self.assertEqual(body["evidence"]["correlation_id"], "preflight-correlation-001")
 
     def test_not_advertised_modify(self) -> None:
         status, body = self._post_preflight(

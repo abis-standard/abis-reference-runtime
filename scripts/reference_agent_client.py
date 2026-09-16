@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reference Agent Client CLI — PROFILE → PREFLIGHT → INVOKE (provider-neutral)."""
+"""Reference Agent Client CLI — DISCOVERY → PROFILE → PREFLIGHT → INVOKE (provider-neutral)."""
 
 from __future__ import annotations
 
@@ -25,7 +25,16 @@ from abis_grp_runtime.gateway.preflight import PREFLIGHT_READY  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="ABIS Reference Agent Client (provider-neutral)")
-    parser.add_argument("--base-url", default=os.environ.get("ABIS_DEMO_GATEWAY_BASE_URL", "http://127.0.0.1:9080"))
+    parser.add_argument(
+        "--base-url",
+        default=None,
+        help="Known Reference Runtime base URL (mutually exclusive with --business-origin)",
+    )
+    parser.add_argument(
+        "--business-origin",
+        default=None,
+        help="Known Business web origin for Reference Runtime Pointer discovery",
+    )
     parser.add_argument("--vertical", default="restaurant")
     parser.add_argument("--operation", default="reserve")
     parser.add_argument("--execution-class", default="CONTROLLED_SIMULATOR")
@@ -36,9 +45,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    base_url = args.base_url or os.environ.get("ABIS_DEMO_GATEWAY_BASE_URL")
+    business_origin = args.business_origin
+    if not base_url and not business_origin:
+        base_url = "http://127.0.0.1:9080"
+
     token = gateway_token_from_env()
     config = ReferenceClientConfig(
-        base_url=args.base_url,
+        base_url=base_url,
+        business_origin=business_origin,
         vertical=args.vertical,
         operation=args.operation,
         execution_class=args.execution_class,
@@ -48,19 +63,28 @@ def main() -> int:
     client = ReferenceAgentClient(config)
     result = client.execute(payload)
 
-    profile_status = "OK" if result.profile_checked else "FAIL"
-    preflight_status = result.preflight_state or "NOT_RUN"
-    invoke_status = "ATTEMPTED" if result.invoke_attempted else "NOT_ATTEMPTED"
-    native_status = result.native_external_status or "-"
-    outcome_status = result.outcome_disposition or "-"
-    trace_id = (result.trace_reference or {}).get("correlation_id") or "-"
-
-    print(f"PROFILE: {profile_status}")
-    print(f"PREFLIGHT: {preflight_status}")
-    print(f"INVOKE: {invoke_status}")
-    print(f"NATIVE RESULT: {native_status}")
-    print(f"OUTCOME: {outcome_status}")
+    if result.business_origin:
+        print(f"BUSINESS ORIGIN: {result.business_origin}")
+        print(f"RUNTIME DISCOVERY: {'OK' if result.pointer_checked else 'FAIL'}")
+    if result.runtime_base_url:
+        print(f"RUNTIME: {result.runtime_base_url}")
+    print(f"PROFILE: {'OK' if result.profile_checked else 'FAIL'}")
+    if result.profile_version is not None:
+        print(f"PROFILE VERSION: {result.profile_version}")
+    if result.runtime_version:
+        print(f"RUNTIME VERSION: {result.runtime_version}")
+    if result.execution_surface_revision:
+        print(f"EXECUTION SURFACE: {result.execution_surface_revision}")
+    print(f"PREFLIGHT: {result.preflight_state or 'NOT_RUN'}")
+    print(f"INVOKE: {'ATTEMPTED' if result.invoke_attempted else 'NOT_ATTEMPTED'}")
+    print(f"NATIVE RESULT: {result.native_external_status or '-'}")
+    print(f"OUTCOME: {result.outcome_disposition or '-'}")
+    trace_id = (result.trace_reference or {}).get("correlation_id") or result.correlation_id or "-"
     print(f"TRACE: {trace_id}")
+    if result.invoke_attempted and result.preflight_state == PREFLIGHT_READY:
+        print("FINAL STATUS: PASS")
+    else:
+        print("FINAL STATUS: FAIL")
 
     if result.error:
         print(f"ERROR: {result.error}", file=sys.stderr)

@@ -1,6 +1,6 @@
 [project]
 name = "abis-reference-runtime"
-version = "0.2.0"
+version = "0.3.0"
 description = "Reference implementation for executing ABIS Business Interactions against a controlled reference business system"
 readme = "README.md"
 requires-python = ">=3.9"
