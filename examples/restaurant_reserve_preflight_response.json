@@ -5,9 +5,9 @@
     "conformance_determination": false
   },
   "evidence": {
-    "execution_surface_revision": "restaurant-reserve-1",
-    "profile_version": 1,
-    "runtime_version": "0.3.0"
+    "execution_surface_revision": "reference-execution-surface-2",
+    "profile_version": 2,
+    "runtime_version": "0.4.0"
   },
   "execution_class": "CONTROLLED_SIMULATOR",
   "invocation": {

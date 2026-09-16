@@ -192,15 +192,24 @@ Example (abbreviated):
 ```json
 {
   "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 1,
-  "runtime": { "name": "abis-reference-runtime", "version": "0.3.0" },
+  "profile_version": 2,
+  "execution_surface_revision": "reference-execution-surface-2",
+  "runtime": { "name": "abis-reference-runtime", "version": "0.4.0" },
   "authority": { "semantic": "NONE", "normative": "NONE" },
   "advertised_interactions": [
     {
       "vertical": "restaurant",
       "operation": "reserve",
       "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
+      "descriptor_path": "/v1/reference-profile/interactions/restaurant/reserve",
       "invocation": { "method": "POST", "path": "/v1/demo/restaurant/invoke" }
+    },
+    {
+      "vertical": "shopping",
+      "operation": "submit_order",
+      "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
+      "descriptor_path": "/v1/reference-profile/interactions/shopping/submit_order",
+      "invocation": { "method": "POST", "path": "/v1/demo/shopping/invoke" }
     }
   ],
   "authorization": { "invoke": { "required": true, "scheme": "bearer" } },
@@ -225,7 +234,15 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/preflight \
 
 Example response: `examples/restaurant_reserve_preflight_response.json`
 
-### 6. Serve a synthetic Reference Business Origin (v0.3.0)
+### 6. Fetch an Interaction Descriptor (v0.4.0)
+
+```bash
+curl -s http://127.0.0.1:9080/v1/reference-profile/interactions/restaurant/reserve | python3 -m json.tool
+```
+
+Descriptors are **implementation metadata only** — not ABIS Capability, not conformance, not outcome prediction. Use `descriptor_path` from the Profile; do not guess URLs.
+
+### 7. Serve a synthetic Reference Business Origin
 
 In a second terminal (after the gateway is running):
 
@@ -242,7 +259,7 @@ This serves an implementation-level **Reference Runtime Pointer** at:
 
 See: `examples/reference_runtime_pointer.json`
 
-### 7. Reference Agent Client (Business Origin or Base URL → Preflight → Invoke)
+### 8. Reference Agent Client (Business Origin or Base URL → Descriptor → Preflight → Invoke)
 
 This repository includes a **provider-neutral Reference Agent Client**. It does **not** perform Internet-wide business discovery.
 
@@ -275,15 +292,16 @@ Sequence:
 
 1. **Business Origin discovery (optional)** — `GET /.well-known/abis-reference-runtime`
 2. **Inspect Runtime Surface** — `GET /v1/reference-profile`
-3. **Preflight Interaction** — `POST /v1/demo/{vertical}/preflight`
-4. **Invoke Interaction** — profile-provided relative path with Bearer auth
-5. **Inspect Native Result / Trace** — `native_result.external_status`, `outcome_disposition`, `trace_reference`
+3. **Fetch Interaction Descriptor** — `GET` each interaction's `descriptor_path`
+4. **Preflight Interaction** — `POST /v1/demo/{vertical}/preflight`
+5. **Invoke Interaction** — profile/descriptor-provided relative path with Bearer auth
+6. **Inspect Native Result / Trace** — `native_result.external_status`, `outcome_disposition`, `trace_reference`
 
 `NATIVE RESULT: CONFIRMED` does **not** mean Business Outcome SUCCESS. The client does not assert conformance, certification, or trust.
 
 See: `examples/reference_agent_request.json`
 
-### 8. Send a Business Interaction (manual curl)
+### 9. Send a Business Interaction (manual curl)
 
 In a second terminal:
 
@@ -294,7 +312,7 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
   -d @examples/restaurant_reserve_normal.json | python3 -m json.tool
 ```
 
-### 9. Inspect business state
+### 10. Inspect business state
 
 ```bash
 cat ./data/state.json | python3 -m json.tool
@@ -348,8 +366,9 @@ chmod +x scripts/run_tests.sh
 Or:
 
 ```bash
-PYTHONPATH=runtime/src:reference-business/controlled-reservation-simulator/src:. \
+PYTHONPATH=runtime/src:reference-business/controlled-reservation-simulator/src:reference-business/controlled-commerce-simulator/src:. \
   python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s reference-business/controlled-commerce-simulator/tests -v
 ```
 
 Clean-room E2E (isolated temp data directory, synthetic token):
@@ -369,4 +388,4 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Status
 
-**Developer Preview** — v0.3.0. Not for production use.
+**Developer Preview** — v0.4.0. Not for production use.
