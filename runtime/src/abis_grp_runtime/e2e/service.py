@@ -39,12 +39,14 @@ class GrokE2EService:
         bound_operation = adapter.bind_operation(operation)
         runtime = RuntimeCore(connector=connector)
         adapter_client = ExternalAgentAdapter(runtime)
+        icr = request.implementation_continuity_reference
         provenance = build_execution_provenance(
             vertical=vertical,
             operation=operation,
             business_system_identifier=adapter.business_system_identifier,
             business_system_classification=adapter.business_system_classification,
             descriptor_path=registered.descriptor_path if registered else None,
+            implementation_continuity_reference=icr,
         )
         return adapter_client.invoke(request, execution_provenance=provenance)
 
@@ -52,6 +54,10 @@ class GrokE2EService:
         data = dict(payload)
         if "structured_input" not in data and "input" in data:
             data["structured_input"] = dict(data.pop("input"))
+        if data.get("implementation_continuity_reference") is not None:
+            data["implementation_continuity_reference"] = str(
+                data["implementation_continuity_reference"]
+            ).strip() or None
         if "authorization_token" not in data:
             data["authorization_token"] = "ALLOW"
         if "execution_class" not in data:

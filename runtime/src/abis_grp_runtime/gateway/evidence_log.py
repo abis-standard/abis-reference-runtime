@@ -25,6 +25,9 @@ def _safe_record(record: Mapping[str, Any]) -> dict[str, Any]:
         "http_status": record.get("http_status"),
         "transport_status": record.get("transport_status"),
         "gateway_error_code": record.get("gateway_error_code"),
+        "observation_kind": record.get("observation_kind"),
+        "implementation_continuity_reference": record.get("implementation_continuity_reference"),
+        "external_identifier": record.get("external_identifier"),
     }
 
 

@@ -20,15 +20,15 @@
     },
     "descriptor_path": "/v1/reference-profile/interactions/restaurant/reserve",
     "descriptor_version": 1,
-    "execution_surface_revision": "reference-execution-surface-3",
+    "execution_surface_revision": "reference-execution-surface-4",
     "interaction": {
       "operation": "reserve",
       "vertical": "restaurant"
     },
-    "profile_version": 3,
+    "profile_version": 4,
     "runtime": {
       "name": "abis-reference-runtime",
-      "version": "0.5.0"
+      "version": "0.6.0"
     }
   },
   "native_result": {

@@ -43,6 +43,7 @@ class AgentRequestEnvelope:
     authorization_token: str
     request_id: str | None = None
     correlation_id: str | None = None
+    implementation_continuity_reference: str | None = None
     agent_type: str = "generic"
     structured_input: Mapping[str, Any] = field(default_factory=dict)
     constraints: Mapping[str, Any] = field(default_factory=dict)
@@ -77,6 +78,7 @@ class AgentResponseEnvelope:
     outcome_disposition: dict[str, Any] | None = None
     execution_provenance: dict[str, Any] | None = None
     trace_reference: dict[str, Any] = field(default_factory=dict)
+    implementation_continuity_reference: str | None = None
     error: AgentErrorEnvelope | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -92,6 +94,8 @@ class AgentResponseEnvelope:
             "execution_provenance": self.execution_provenance,
             "trace_reference": self.trace_reference,
         }
+        if self.implementation_continuity_reference is not None:
+            payload["implementation_continuity_reference"] = self.implementation_continuity_reference
         if self.error is not None:
             payload["error"] = self.error.to_dict()
         return payload

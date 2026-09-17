@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.6.0 — Developer Preview (implementation continuity & technical observation)
+
+### Added
+
+- Optional `implementation_continuity_reference` on Invoke request/response (non-normative implementation correlation)
+- Runtime-generated UUID v4 ICR when omitted on initial Invoke
+- `POST /v1/demo/restaurant/observe` — technical native observation by `external_identifier`
+- ICR, observe, and semantic firewall tests (`tests/test_icr.py`, `tests/test_observe.py`, `tests/test_v06_semantic_firewall.py`)
+
+### Changed
+
+- Profile v4 (`profile_version=4`)
+- `execution_surface_revision`: `reference-execution-surface-3` → `reference-execution-surface-4`
+- Evidence log may include `implementation_continuity_reference`, `external_identifier`, `observation_kind`
+
+### Unchanged boundaries
+
+- Native Result ≠ Business Outcome (`NOT_EVALUATED`)
+- Completion Determination **NOT_IMPLEMENTED**
+- Published interactions: `restaurant/reserve`, `shopping/submit_order` only
+- `modify` / `cancel` normative binding **NOT** in scope
+- `REAL_EXECUTION = PROHIBITED`, `REAL_EXTERNAL` denied
+- **Backward compatible:** v0.5 clients omitting ICR behave as before
+
 ## v0.5.0 — Developer Preview (invoke provenance & transport neutrality)
 
 ### Added

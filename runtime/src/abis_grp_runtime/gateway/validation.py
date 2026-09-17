@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping
 
+from abis_grp_runtime.agent.continuity_reference import ICR_FIELD_NAME, validate_icr
 from abis_grp_runtime.gateway.config import ALLOWED_EXECUTION_CLASSES
 from abis_grp_runtime.adapters.errors import AdapterValidationError
 from abis_grp_runtime.gateway.errors import GatewayError, GatewayErrorCode
@@ -51,6 +52,7 @@ ALLOWED_TOP_LEVEL_KEYS = frozenset(
         "authorization_token",
         "correlation_id",
         "request_id",
+        ICR_FIELD_NAME,
         "input",
         "structured_input",
         "metadata",
@@ -184,6 +186,25 @@ def validate_payload(data: Any, *, vertical: str) -> tuple[dict[str, Any] | None
         )
 
     structured = dict(data[input_key])
+    icr_raw = data.get(ICR_FIELD_NAME)
+    icr_value = str(icr_raw).strip() if icr_raw is not None else None
+    if icr_value:
+        icr_error = validate_icr(
+            icr_value,
+            forbidden_equals=(
+                str(structured.get("idempotency_key") or "") or None,
+                str(structured.get("external_identifier") or "") or None,
+                str(data.get("correlation_id") or "") or None,
+                str(data.get("request_id") or "") or None,
+            ),
+        )
+        if icr_error:
+            return None, GatewayError(
+                GatewayErrorCode.REQUEST_INVALID,
+                icr_error,
+                http_status=400,
+            )
+
     if _contains_url_like(structured):
         return None, GatewayError(
             GatewayErrorCode.REQUEST_INVALID,

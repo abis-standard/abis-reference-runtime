@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
+from abis_grp_runtime.agent.continuity_reference import generate_icr, validate_icr
 from abis_grp_runtime.agent.envelope import AgentRequestEnvelope, AgentResponseEnvelope
 from abis_grp_runtime.agent.errors import AgentContractErrorCode, AgentErrorEnvelope
 from abis_grp_runtime.agent.validation import validate_agent_request
@@ -104,6 +105,34 @@ class ExternalAgentAdapter:
     ) -> AgentResponseEnvelope:
         request_id = request.request_id or str(uuid4())
         correlation_id = request.correlation_id or str(uuid4())
+        structured = dict(request.structured_input)
+        idempotency_key = str(structured.get("idempotency_key") or "")
+        external_identifier = str(structured.get("external_identifier") or "")
+
+        icr_error = validate_icr(
+            request.implementation_continuity_reference,
+            forbidden_equals=(
+                idempotency_key or None,
+                external_identifier or None,
+                correlation_id,
+                request_id,
+            ),
+        )
+        if icr_error is not None:
+            return _error_response(
+                request,
+                request_id=request_id,
+                correlation_id=correlation_id,
+                transport_status="REJECTED",
+                error=AgentErrorEnvelope(
+                    code=AgentContractErrorCode.INVALID_REQUEST,
+                    message=icr_error,
+                ),
+            )
+
+        implementation_continuity_reference = request.implementation_continuity_reference
+        if not implementation_continuity_reference or not str(implementation_continuity_reference).strip():
+            implementation_continuity_reference = generate_icr()
 
         validation_error = validate_agent_request(request)
         if validation_error is not None:
@@ -220,9 +249,18 @@ class ExternalAgentAdapter:
                 "outcome_ref": pipeline.outcome_disposition.outcome_ref,
             }
 
+        provenance = execution_provenance
+        if provenance is not None and implementation_continuity_reference:
+            provenance = dict(provenance)
+            provenance["implementation_continuity_reference"] = implementation_continuity_reference
+            provenance["implementation_continuity_disclaimer"] = (
+                "implementation correlation only — not ABIS Interaction identity"
+            )
+
         return AgentResponseEnvelope(
             request_id=request_id,
             correlation_id=correlation_id,
+            implementation_continuity_reference=implementation_continuity_reference,
             transport_status="ACCEPTED",
             agent_identity=request.identity,
             authorization_disposition={
@@ -236,6 +274,6 @@ class ExternalAgentAdapter:
             },
             native_result=_native_result_to_dict(pipeline.native_result),
             outcome_disposition=outcome_dict,
-            execution_provenance=execution_provenance,
+            execution_provenance=provenance,
             trace_reference=pipeline.trace.to_dict(),
         )

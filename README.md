@@ -1,8 +1,29 @@
 # ABIS Reference Runtime
 
-**Developer Preview — v0.5.0**
+**Developer Preview — v0.6.0**
 
 Reference implementation for executing ABIS Business Interactions against controlled reference business systems.
+
+---
+
+## What's new in v0.6.0 (vs v0.5.0)
+
+| Area | v0.5.0 | v0.6.0 |
+| --- | --- | --- |
+| Implementation continuity | — | Optional `implementation_continuity_reference` (non-normative implementation metadata) |
+| Retry correlation | `idempotency_key` only | ICR may link retries/recovery Invokes (orthogonal to idempotency) |
+| Technical observation | — | `POST /v1/demo/restaurant/observe` (native lookup by `external_identifier`) |
+| Profile | `profile_version=3` | `profile_version=4` |
+| Execution surface | `reference-execution-surface-3` | `reference-execution-surface-4` |
+
+**Boundary reminders:**
+
+- `implementation_continuity_reference` is **not** ABIS Interaction identity, Business Interaction identity, Decision identity, or Outcome identity.
+- `native_result.external_identifier` identifies an **external/native object**, not an ABIS Interaction.
+- `observe` performs **technical/native observation only** — not Business Outcome Evaluation, not Completion Determination.
+- `modify` / `cancel` normative Interaction binding remains **outside v0.6**.
+
+**Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · **no Internet-wide business discovery** · **REAL_EXECUTION PROHIBITED** · Native Result ≠ Business Outcome (`NOT_EVALUATED`).
 
 ---
 
@@ -92,7 +113,7 @@ The Reference Runtime Pointer is an **implementation-level, informative, referen
 
 ## Architecture
 
-### Discovery flow (v0.5.0)
+### Discovery flow (v0.6.0)
 
 ```text
 Known Business Origin
@@ -116,7 +137,7 @@ Native Business Result + execution_provenance + trace_reference
 Outcome: NOT_EVALUATED
 ```
 
-Published interactions (v0.5.0):
+Published interactions (v0.6.0):
 
 - `restaurant` / `reserve` / `CONTROLLED_SIMULATOR`
 - `shopping` / `submit_order` / `CONTROLLED_SIMULATOR`
@@ -208,9 +229,9 @@ Example (abbreviated):
 ```json
 {
   "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 3,
-  "execution_surface_revision": "reference-execution-surface-3",
-  "runtime": { "name": "abis-reference-runtime", "version": "0.5.0" },
+  "profile_version": 4,
+  "execution_surface_revision": "reference-execution-surface-4",
+  "runtime": { "name": "abis-reference-runtime", "version": "0.6.0" },
   "authority": { "semantic": "NONE", "normative": "NONE" },
   "advertised_interactions": [
     {
@@ -357,6 +378,33 @@ curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/invoke \
 
 The same `native_result.external_identifier` is returned. `state.json` retains **one** reservation.
 
+`idempotency_key` and `implementation_continuity_reference` are **orthogonal**. ICR links implementation Invokes; idempotency deduplicates simulator submissions.
+
+---
+
+## Implementation Continuity Reference
+
+Optional non-normative field: `implementation_continuity_reference`.
+
+- Generated as UUID v4 when omitted on initial Invoke
+- May be reused across retry/recovery Invokes
+- **Not** ABIS Interaction identity · **not** `external_identifier` · **not** `idempotency_key`
+
+---
+
+## Technical observation (restaurant)
+
+After a `PENDING` Invoke, poll native state:
+
+```bash
+curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/observe \
+  -H "Authorization: Bearer $ABIS_DEMO_GATEWAY_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"correlation_id":"observe-001","external_identifier":"TEST-RSV-..."}'
+```
+
+`observe` returns a Native Result snapshot only. It does **not** evaluate Business Outcome or perform Completion Determination.
+
 ---
 
 ## Result semantics
@@ -414,4 +462,4 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Status
 
-**Developer Preview** — v0.5.0. Not for production use.
+**Developer Preview** — v0.6.0. Not for production use.

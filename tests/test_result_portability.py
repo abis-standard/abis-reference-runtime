@@ -13,6 +13,7 @@ ensure_paths()
 
 from abis_grp_runtime.descriptor.constants import DESCRIPTOR_VERSION  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
+from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION  # noqa: E402
 from abis_grp_runtime.gateway.reference_profile import PROFILE_VERSION  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
 from abis_grp_runtime.native_result import NativeResultEnvelope  # noqa: E402
@@ -130,7 +131,7 @@ class ResultPortabilityTestCase(unittest.TestCase):
             _get_path(provenance, path)
         self.assertEqual(provenance["runtime"]["version"], __version__)
         self.assertEqual(provenance["profile_version"], PROFILE_VERSION)
-        self.assertEqual(provenance["execution_surface_revision"], "reference-execution-surface-3")
+        self.assertEqual(provenance["execution_surface_revision"], EXECUTION_SURFACE_REVISION)
         self.assertEqual(provenance["interaction"]["vertical"], vertical)
         self.assertEqual(provenance["interaction"]["operation"], operation)
         self.assertEqual(provenance["descriptor_version"], DESCRIPTOR_VERSION)

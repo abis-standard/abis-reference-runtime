@@ -13,7 +13,7 @@ from abis_grp_runtime.gateway.execution_surface import (
 from abis_grp_runtime.registry.interaction_registry import require_active_registry
 
 PROFILE_KIND = "abis-reference-runtime-profile"
-PROFILE_VERSION = 3
+PROFILE_VERSION = 4
 RUNTIME_NAME = "abis-reference-runtime"
 REFERENCE_PROFILE_PATH = "/v1/reference-profile"
 HEALTH_PATH = "/health"
@@ -51,6 +51,20 @@ def build_reference_runtime_profile(config: GatewayConfig) -> dict[str, Any]:
         },
         "outcome_boundary": {
             "normative_business_outcome_evaluation": "NOT_IMPLEMENTED",
+            "completion_determination": "NOT_IMPLEMENTED",
+        },
+        "implementation_continuity": {
+            "field": "implementation_continuity_reference",
+            "semantic_authority": "NONE",
+            "disclaimer": "implementation correlation only — not ABIS Interaction identity",
+        },
+        "technical_observation": {
+            "restaurant": {
+                "method": "POST",
+                "path": "/v1/demo/restaurant/observe",
+                "purpose": "native technical observation only",
+                "business_outcome_evaluation": "NOT_IMPLEMENTED",
+            },
         },
         "health": {
             "method": "GET",

@@ -22,9 +22,11 @@ from abis_grp_runtime.gateway.reference_profile import (
     build_health_response,
     build_reference_runtime_profile,
 )
+from abis_grp_runtime.gateway.observe import execute_observe, validate_observe_payload
 from abis_grp_runtime.gateway.validation import validate_payload
 
 INVOKE_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/invoke/?$")
+OBSERVE_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/observe/?$")
 PREFLIGHT_PATH = re.compile(r"^/v1/demo/(?P<vertical>[a-z_]+)/preflight/?$")
 DESCRIPTOR_PATH = re.compile(
     r"^/v1/reference-profile/interactions/(?P<vertical>[a-z_]+)/(?P<operation>[a-z_]+)/?$"
@@ -137,7 +139,10 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            self._handle_invoke_post()
+            if OBSERVE_PATH.match(path):
+                self._handle_observe_post()
+            else:
+                self._handle_invoke_post()
         finally:
             self.rate_limit.release(self._client_key)
 
@@ -198,6 +203,71 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
         )
         self._send_json(200, body)
 
+    def _handle_observe_post(self) -> None:
+        path = urlparse(self.path).path
+        match = OBSERVE_PATH.match(path)
+        if not match:
+            self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "unsupported route", http_status=404))
+            return
+
+        vertical = match.group("vertical")
+        payload, error = self._read_json_body()
+        if error:
+            self._reject(error, correlation_id=None)
+            return
+
+        correlation_id = None
+        if isinstance(payload, dict):
+            correlation_id = str(payload.get("correlation_id") or "") or None
+
+        if not isinstance(payload, dict):
+            self._reject(GatewayError(GatewayErrorCode.REQUEST_INVALID, "JSON object required", http_status=400))
+            return
+
+        normalized, error = validate_observe_payload(payload, vertical=vertical)
+        if error:
+            self._reject(error, correlation_id=correlation_id)
+            return
+
+        assert normalized is not None
+        token = extract_bearer_token(self.headers.get("Authorization")) or "ALLOW"
+        try:
+            result = execute_observe(
+                self.service,
+                normalized=normalized,
+                authorization_token=token,
+            )
+        except Exception:
+            self._reject(
+                GatewayError(GatewayErrorCode.RUNTIME_ERROR, "runtime error", http_status=500),
+                correlation_id=correlation_id,
+            )
+            return
+
+        body = result.to_dict()
+        native = body.get("native_result") or {}
+        outcome = body.get("outcome_disposition") or {}
+        append_evidence(
+            self.config.evidence_log_path,
+            {
+                "correlation_id": body.get("correlation_id"),
+                "agent_type": (body.get("agent_identity") or {}).get("agent_type"),
+                "vertical": vertical,
+                "operation": "observe",
+                "observation_kind": "native_technical_observation",
+                "implementation_continuity_reference": body.get("implementation_continuity_reference"),
+                "external_identifier": normalized.get("external_identifier"),
+                "authorization_disposition": (body.get("authorization_disposition") or {}).get("state"),
+                "execution_disposition": (body.get("execution_disposition") or {}).get("execution_class"),
+                "native_status": native.get("external_status"),
+                "outcome_disposition": outcome.get("disposition"),
+                "http_status": 200 if body.get("transport_status") == "ACCEPTED" else 422,
+                "transport_status": body.get("transport_status"),
+            },
+        )
+        status = 200 if body.get("transport_status") == "ACCEPTED" else 422
+        self._send_json(status, body)
+
     def _handle_invoke_post(self) -> None:
         path = urlparse(self.path).path
         match = INVOKE_PATH.match(path)
@@ -252,6 +322,9 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
                 "agent_type": (body.get("agent_identity") or {}).get("agent_type"),
                 "vertical": vertical,
                 "operation": normalized.get("operation"),
+                "observation_kind": "invoke",
+                "implementation_continuity_reference": body.get("implementation_continuity_reference"),
+                "external_identifier": native.get("external_identifier"),
                 "authorization_disposition": auth.get("state"),
                 "execution_disposition": execution.get("execution_class"),
                 "native_status": native.get("external_status"),

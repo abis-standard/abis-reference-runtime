@@ -88,8 +88,11 @@ class TestPreflightStates(PreflightTestCase):
         self.assertFalse(body["disclaimer"]["business_outcome_prediction"])
         evidence = body["evidence"]
         self.assertIsNotNone(evidence.get("runtime_version"))
-        self.assertEqual(evidence.get("profile_version"), 3)
-        self.assertEqual(evidence.get("execution_surface_revision"), "reference-execution-surface-3")
+        from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION
+        from abis_grp_runtime.gateway.reference_profile import PROFILE_VERSION
+
+        self.assertEqual(evidence.get("profile_version"), PROFILE_VERSION)
+        self.assertEqual(evidence.get("execution_surface_revision"), EXECUTION_SURFACE_REVISION)
 
     def test_correlation_id_echoed_in_evidence(self) -> None:
         payload = {**_ready_payload(), "correlation_id": "preflight-correlation-001"}

@@ -14,6 +14,7 @@ ensure_paths()
 
 from abis_grp_runtime.version import __version__  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
+from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION  # noqa: E402
 from abis_grp_runtime.gateway.reference_profile import (  # noqa: E402
     PROFILE_KIND,
     PROFILE_VERSION,
@@ -75,7 +76,7 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
         self.assertEqual(body["runtime"]["version"], __version__)
         self.assertEqual(body["authority"]["semantic"], "NONE")
         self.assertEqual(body["authority"]["normative"], "NONE")
-        self.assertEqual(body["execution_surface_revision"], "reference-execution-surface-3")
+        self.assertEqual(body["execution_surface_revision"], EXECUTION_SURFACE_REVISION)
         self.assertNotIn("business_system", body)
 
     def test_advertised_interactions_match_gateway_truth(self) -> None:

@@ -14,6 +14,8 @@ def build_execution_provenance(
     business_system_identifier: str,
     business_system_classification: str = "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE",
     descriptor_path: str | None = None,
+    implementation_continuity_reference: str | None = None,
+    observation_kind: str | None = None,
 ) -> dict[str, Any]:
     """Build minimal vertical-neutral execution provenance for Invoke responses."""
     from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION
@@ -22,7 +24,7 @@ def build_execution_provenance(
 
     vertical_norm = vertical.strip().lower()
     operation_norm = operation.strip().lower()
-    return {
+    result: dict[str, Any] = {
         "runtime": {
             "name": RUNTIME_NAME,
             "version": RUNTIME_VERSION,
@@ -40,3 +42,11 @@ def build_execution_provenance(
             "classification": business_system_classification,
         },
     }
+    if implementation_continuity_reference:
+        result["implementation_continuity_reference"] = implementation_continuity_reference
+        result["implementation_continuity_disclaimer"] = (
+            "implementation correlation only — not ABIS Interaction identity"
+        )
+    if observation_kind:
+        result["observation_kind"] = observation_kind
+    return result

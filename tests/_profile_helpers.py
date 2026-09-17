@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from abis_grp_runtime.descriptor.constants import DESCRIPTOR_KIND, DESCRIPTOR_VERSION
-from abis_grp_runtime.gateway.reference_profile import PROFILE_KIND
+from abis_grp_runtime.gateway.reference_profile import PROFILE_KIND, PROFILE_VERSION
 
 
 def valid_profile(*, invoke_path: str = "/v1/demo/restaurant/invoke") -> dict:
     return {
         "profile_kind": PROFILE_KIND,
-        "profile_version": 3,
+        "profile_version": PROFILE_VERSION,
         "advertised_interactions": [
             {
                 "vertical": "restaurant",

@@ -76,6 +76,10 @@ class RestaurantSimulatorConnector(BusinessConnectorPort):
             reservation_id = str(ctx.get("reservation_id", ""))
             crs = self._engine.cancel(reservation_id, test_scenario=ctx.get("test_scenario"))
             return crs_dict_to_native_envelope(crs, operation=op)
+        if op == "observe":
+            external_identifier = str(ctx.get("external_identifier", ""))
+            crs = self._engine.get(external_identifier, test_scenario=ctx.get("test_scenario"))
+            return crs_dict_to_native_envelope(crs, operation=op)
         return NativeResultEnvelope(
             technical_status="TRANSPORT_FAILED",
             external_status=None,

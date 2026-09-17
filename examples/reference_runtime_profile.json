@@ -1,10 +1,10 @@
 {
   "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 3,
-  "execution_surface_revision": "reference-execution-surface-3",
+  "profile_version": 4,
+  "execution_surface_revision": "reference-execution-surface-4",
   "runtime": {
     "name": "abis-reference-runtime",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "authority": {
     "semantic": "NONE",
@@ -50,7 +50,21 @@
     "real_execution": "PROHIBITED"
   },
   "outcome_boundary": {
-    "normative_business_outcome_evaluation": "NOT_IMPLEMENTED"
+    "normative_business_outcome_evaluation": "NOT_IMPLEMENTED",
+    "completion_determination": "NOT_IMPLEMENTED"
+  },
+  "implementation_continuity": {
+    "field": "implementation_continuity_reference",
+    "semantic_authority": "NONE",
+    "disclaimer": "implementation correlation only — not ABIS Interaction identity"
+  },
+  "technical_observation": {
+    "restaurant": {
+      "method": "POST",
+      "path": "/v1/demo/restaurant/observe",
+      "purpose": "native technical observation only",
+      "business_outcome_evaluation": "NOT_IMPLEMENTED"
+    }
   },
   "health": {
     "method": "GET",
