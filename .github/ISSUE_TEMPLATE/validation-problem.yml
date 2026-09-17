@@ -1,0 +1,143 @@
+name: ABIS Validation Problem / Ambiguity
+description: Report a blocker, ambiguity, or incomplete validation when a full Validation Report cannot be completed.
+title: "[Validation Problem] "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Validation problem or ambiguity
+
+        Use this form when validation **stopped early** or public materials were insufficient.
+
+        This is **validation evidence** — not certification.
+
+        **Do not** paste bearer tokens, API keys, passwords, PII, or secrets.
+
+        See [VALIDATION.md](https://github.com/abis-standard/abis-reference-runtime/blob/main/VALIDATION.md).
+
+  - type: dropdown
+    id: reporter_type
+    attributes:
+      label: Reporter Type
+      options:
+        - Human
+        - AI Agent
+        - Human + AI Agent
+    validations:
+      required: true
+
+  - type: input
+    id: agent_provider
+    attributes:
+      label: Agent / Provider
+      placeholder: "ChatGPT, Claude, Grok, Custom Agent, N/A"
+    validations:
+      required: true
+
+  - type: input
+    id: runtime_version
+    attributes:
+      label: ABIS Reference Runtime Version
+      placeholder: v0.6.0
+    validations:
+      required: true
+
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario
+      placeholder: restaurant / reserve / CONTROLLED_SIMULATOR
+    validations:
+      required: true
+
+  - type: dropdown
+    id: validation_stopped_at
+    attributes:
+      label: Where did validation stop?
+      options:
+        - Repository understanding
+        - Profile
+        - Descriptor
+        - Preflight
+        - Invoke
+        - Observe
+        - Evidence interpretation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: public_materials_inspected
+    attributes:
+      label: What public information was inspected?
+      description: Files, endpoints, docs, commits (no secrets).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_understanding
+    attributes:
+      label: Expected understanding
+      description: What you expected to learn or execute from public materials.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_blocker
+    attributes:
+      label: Actual understanding / blocker
+      description: What actually happened or what blocked progress.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_evidence
+    attributes:
+      label: Reproduction evidence
+      description: Sanitized commands, URLs (public only), response excerpts. No Authorization headers or secrets.
+
+  - type: dropdown
+    id: human_assistance_required
+    attributes:
+      label: Was human assistance required?
+      options:
+        - No
+        - Yes
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: assistance_detail
+    attributes:
+      label: Human assistance detail
+      description: If yes, what had to be supplied? (no secrets)
+
+  - type: textarea
+    id: suggested_clarification
+    attributes:
+      label: Suggested clarification
+      description: Feedback only — does not automatically become ABIS semantics.
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Boundaries
+
+        - Native Result ≠ Business Outcome
+        - Technical status ≠ Business Outcome
+        - Validation ≠ Certification / Conformance
+
+  - type: checkboxes
+    id: attestations
+    attributes:
+      label: Attestations
+      options:
+        - label: I removed credentials, tokens, PII, and secrets from this report.
+          required: true
+        - label: I did not treat Native Result or technical status as Business Outcome.
+          required: true
+        - label: I understand this is validation feedback, not ABIS certification.
+          required: true

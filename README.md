@@ -189,6 +189,25 @@ The Reference Agent Client automates discovery (optional) → Profile → Prefli
 
 ---
 
+## Validate ABIS
+
+ABIS Reference Runtime welcomes **independent validation** by humans, AI agents, and human+agent teams.
+
+Validation is evidence gathering — **not** certification or conformance determination.
+
+```text
+Inspect → Test → Record Evidence → Open Issue → Improve ABIS
+```
+
+| Resource | Link |
+| --- | --- |
+| Validation guide | [VALIDATION.md](VALIDATION.md) |
+| Agent prompt (copy-ready) | [validation/agent-validation-prompt.md](validation/agent-validation-prompt.md) |
+| Submit Validation Report | [Open Issue — Validation Report](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
+| Report problem / ambiguity | [Open Issue — Validation Problem](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-problem.yml) |
+
+---
+
 ## Quick Start
 
 ### 1. Clone and enter the repository

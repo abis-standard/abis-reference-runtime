@@ -1,0 +1,250 @@
+name: ABIS Validation Report
+description: Report an independent ABIS Reference Runtime validation performed by a human, AI agent, or human+agent team.
+title: "[Validation] "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Public validation evidence
+
+        Thank you for independent validation. This Issue collects **validation evidence** — not certification or conformance determination.
+
+        **Do not** paste bearer tokens, API keys, passwords, cookies, private URLs, PII, or confidential data.
+
+        See [VALIDATION.md](https://github.com/abis-standard/abis-reference-runtime/blob/main/VALIDATION.md) for the full guide.
+
+  - type: dropdown
+    id: reporter_type
+    attributes:
+      label: Reporter Type
+      description: Who performed this validation?
+      options:
+        - Human
+        - AI Agent
+        - Human + AI Agent
+    validations:
+      required: true
+
+  - type: input
+    id: agent_provider
+    attributes:
+      label: Agent / Provider
+      description: "Examples: ChatGPT, Claude, Grok, Custom Agent, N/A"
+      placeholder: "e.g. Claude"
+    validations:
+      required: true
+
+  - type: input
+    id: model_runtime
+    attributes:
+      label: Model / Agent Runtime
+      description: Optional. Do not include secrets, API keys, or credentials.
+      placeholder: "e.g. model name or runtime environment (sanitized)"
+
+  - type: input
+    id: runtime_version
+    attributes:
+      label: ABIS Reference Runtime Version
+      description: Tag or commit tested against.
+      placeholder: v0.6.0
+    validations:
+      required: true
+
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario
+      description: "Example: restaurant / reserve / CONTROLLED_SIMULATOR"
+      placeholder: restaurant / reserve / CONTROLLED_SIMULATOR
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source_of_truth
+    attributes:
+      label: Source of Truth
+      description: What materials were primarily used?
+      options:
+        - Public repository/runtime only
+        - Public sources + human assistance
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: assistance_required
+    attributes:
+      label: Human / Private Assistance Required
+      description: What additional information had to be supplied beyond public materials? Leave blank if none.
+      placeholder: Describe any manual explanation, private docs, or credentials setup assistance (do not paste secrets).
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Validation phases
+
+        Mark each phase based on what you **actually** validated. `NOT_ATTEMPTED` if not tried.
+
+  - type: dropdown
+    id: phase_repository
+    attributes:
+      label: Repository Understanding
+      options:
+        - PASS
+        - FAIL
+        - PARTIAL
+        - NOT_ATTEMPTED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase_profile
+    attributes:
+      label: Profile
+      options:
+        - PASS
+        - FAIL
+        - PARTIAL
+        - NOT_ATTEMPTED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase_descriptor
+    attributes:
+      label: Descriptor
+      options:
+        - PASS
+        - FAIL
+        - PARTIAL
+        - NOT_ATTEMPTED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase_preflight
+    attributes:
+      label: Preflight
+      options:
+        - PASS
+        - FAIL
+        - PARTIAL
+        - NOT_ATTEMPTED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase_invoke
+    attributes:
+      label: Invoke
+      options:
+        - PASS
+        - FAIL
+        - PARTIAL
+        - NOT_ATTEMPTED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase_observe
+    attributes:
+      label: Observe
+      description: Use NOT_APPLICABLE if Observe was not relevant to this scenario.
+      options:
+        - PASS
+        - FAIL
+        - PARTIAL
+        - NOT_ATTEMPTED
+        - NOT_APPLICABLE
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_requests
+    attributes:
+      label: Actual HTTP Requests
+      description: |
+        Distinguish ACTUALLY EXECUTED from intended, planned, inferred, simulated, or unavailable operations.
+      placeholder: |
+        1. GET /v1/reference-profile — ACTUALLY EXECUTED
+        2. GET /v1/reference-profile/interactions/restaurant/reserve — ACTUALLY EXECUTED
+        3. POST /v1/demo/restaurant/preflight — ACTUALLY EXECUTED
+        4. POST /v1/demo/restaurant/invoke — NOT EXECUTED (reason)
+    validations:
+      required: true
+
+  - type: textarea
+    id: native_result
+    attributes:
+      label: Native Result
+      description: Report technical/native observation only. Do not convert to Business Outcome.
+      placeholder: external_status, external_identifier, technical_status, payload excerpts (sanitized)
+
+  - type: textarea
+    id: evidence_trace
+    attributes:
+      label: Evidence / Trace
+      description: |
+        Sanitized commands, response excerpts, trace_reference, request_id, execution_provenance, ICR, external_identifier.
+        **Do not** include Authorization headers, bearer tokens, API keys, PII, or secrets.
+      placeholder: trace_reference, request_id, implementation_continuity_reference, execution_provenance excerpts
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Business Outcome
+
+        Business Outcome evaluation is **outside** the current Reference Runtime scope.
+
+  - type: dropdown
+    id: business_outcome
+    attributes:
+      label: Business Outcome
+      options:
+        - NOT_EVALUATED
+    validations:
+      required: true
+
+  - type: textarea
+    id: ambiguities
+    attributes:
+      label: Ambiguities / Missing Information
+      description: What could not be determined from public information alone?
+    validations:
+      required: true
+
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Blockers
+      description: What prevented complete validation, if anything?
+
+  - type: textarea
+    id: suggested_clarifications
+    attributes:
+      label: Suggested Clarifications
+      description: Suggestions are validation feedback and do not automatically become ABIS semantics.
+
+  - type: input
+    id: final_verdict
+    attributes:
+      label: Final Verdict
+      description: Short summary (e.g. PASS WITH AMBIGUITIES, BLOCKED AT INVOKE).
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: attestations
+    attributes:
+      label: Attestations
+      options:
+        - label: I distinguished actually executed operations from planned/inferred operations.
+          required: true
+        - label: I removed credentials, tokens, PII, and secrets from this report.
+          required: true
+        - label: I did not automatically treat Native Result or technical status as Business Outcome.
+          required: true
+        - label: I understand this report is validation evidence, not ABIS certification or conformance determination.
+          required: true
