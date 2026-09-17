@@ -6,6 +6,20 @@
 
 ---
 
+## Current validation target
+
+Unless you are intentionally validating a **historical release**, validate the current public validation surface from the repository's **default branch** and confirm the Runtime version from the Reference Runtime Profile before execution.
+
+Do **not** select an older tag merely because it appears in search results, cached pages, release history, or examples.
+
+If validating a historical release, report that explicitly.
+
+When live execution is possible, include the Runtime-reported version from `GET /v1/reference-profile` (`runtime.version`) in your Validation Report.
+
+This is a **validation-target freshness rule** only. It does not make `main` normative ABIS semantics, and Runtime-reported version is not ABIS semantic authority.
+
+---
+
 ## Purpose
 
 ABIS welcomes **independent validation** from:
@@ -58,6 +72,66 @@ Validators should **preferably begin** from:
 2. This Reference Runtime repository (`README.md`, `CHANGELOG.md`, examples, profile)
 
 Report whether **additional private or manual explanation** was required. That gap is valuable validation evidence.
+
+---
+
+## Example fixtures vs observed evidence
+
+Files under `examples/` and documented JSON excerpts are **documentation and test fixtures**.
+
+They are **not** evidence that an HTTP request was actually executed.
+
+Validation Reports must distinguish fixture/example content from **actually observed** Runtime responses. Operations not executed must be marked `NOT_EXECUTED` (or equivalent).
+
+---
+
+## Validation modes
+
+### Mode A — Local Runtime Validation
+
+The validator can clone the repository, run the local Reference Runtime, execute HTTP requests against localhost, and record actual evidence.
+
+**Preferred** for complete reproducibility where the environment permits.
+
+### Mode B — Remote Authorized Runtime Validation
+
+The validator has an **explicitly authorized** hosted Runtime endpoint and any required authorization supplied through an appropriate secure channel.
+
+Do **not** publish credentials in GitHub Issues.
+
+This repository does **not** advertise a default public hosted validation endpoint. Do not assume one exists unless separately authorized.
+
+### Mode C — Repository-Only Validation
+
+The validator environment cannot run or reach a Runtime.
+
+Repository-only validation is still useful evidence for documentation discoverability, Profile/Descriptor contract understanding, semantic-boundary interpretation, and ambiguity detection.
+
+**But:** example fixtures must **not** be reported as observed HTTP responses. Unexecuted operations must be marked `NOT_EXECUTED`.
+
+---
+
+## Observe request (restaurant · v0.6.0)
+
+Endpoint: `POST /v1/demo/restaurant/observe` (Bearer auth required)
+
+| Field | Required |
+| --- | --- |
+| `correlation_id` | yes |
+| `external_identifier` | yes |
+| `implementation_continuity_reference` | no |
+
+Example fixture: [`examples/restaurant_observe_request.json`](examples/restaurant_observe_request.json)
+
+Flow:
+
+```text
+Invoke → Native Result → external_identifier → Observe → later/current Native Result snapshot
+```
+
+- Observe ≠ Completion Determination
+- Observe ≠ Business Outcome Evaluation
+- Observed Native Result ≠ Business Outcome
 
 ---
 
@@ -146,57 +220,7 @@ Issue submission does **not** constitute certification.
 
 Use this prompt with any AI agent. A machine-readable copy lives at [`validation/agent-validation-prompt.md`](validation/agent-validation-prompt.md).
 
-```text
-You are independently validating the public ABIS Reference Runtime.
-
-Repository: https://github.com/abis-standard/abis-reference-runtime
-Target version: v0.6.0 (unless README states otherwise)
-
-Use the public repository and Runtime-accessible information as the Source of Truth.
-
-Do not assume undocumented endpoints, execution order, request formats, or semantic meaning.
-
-Determine the supported interaction flow yourself from public materials.
-
-For the selected scenario:
-
-1. Inspect the Reference Runtime Profile.
-2. Inspect the relevant Interaction Descriptor.
-3. Perform Preflight.
-4. Perform Invoke if actually possible in your environment.
-5. Perform Observe if supported and applicable.
-6. Distinguish every ACTUAL HTTP request from planned, inferred, simulated, or unavailable operations.
-7. Report Native Result separately from Business Outcome.
-8. Do not claim ABIS conformance, certification, Completion Determination, or Business Outcome evaluation.
-9. Identify ambiguity, missing information, contradictory information, or unnecessary human assistance.
-
-Return a Validation Report containing:
-
-- REPORTER TYPE (Human / AI Agent / Human + AI Agent)
-- AGENT / PROVIDER
-- MODEL / RUNTIME (if known; no secrets)
-- ABIS RUNTIME VERSION
-- SCENARIO (e.g. restaurant / reserve / CONTROLLED_SIMULATOR)
-- SOURCE OF TRUTH
-- PRIVATE / MANUAL ASSISTANCE REQUIRED
-- REPOSITORY UNDERSTANDING (PASS / FAIL / PARTIAL / NOT_ATTEMPTED)
-- PROFILE (PASS / FAIL / PARTIAL / NOT_ATTEMPTED)
-- DESCRIPTOR (PASS / FAIL / PARTIAL / NOT_ATTEMPTED)
-- PREFLIGHT (PASS / FAIL / PARTIAL / NOT_ATTEMPTED)
-- INVOKE (PASS / FAIL / PARTIAL / NOT_ATTEMPTED)
-- OBSERVE (PASS / FAIL / PARTIAL / NOT_ATTEMPTED / NOT_APPLICABLE)
-- ACTUAL HTTP REQUESTS (numbered list; mark ACTUALLY EXECUTED vs NOT EXECUTED with reason)
-- NATIVE RESULT (technical/native fields only)
-- EVIDENCE / TRACE (sanitized; no Authorization headers or secrets)
-- BUSINESS OUTCOME: NOT_EVALUATED
-- AMBIGUITIES
-- BLOCKERS
-- SUGGESTED CLARIFICATIONS (feedback only — not automatic ABIS semantics)
-- FINAL VERDICT
-
-Never report an operation as executed unless it was actually executed.
-Never expose credentials, tokens, secrets, or PII.
-```
+See [`validation/agent-validation-prompt.md`](validation/agent-validation-prompt.md) for the full copy-ready prompt (includes validation-target freshness, validation modes, and source-inspection reporting).
 
 ---
 

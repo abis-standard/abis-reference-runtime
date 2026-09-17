@@ -1,0 +1,18 @@
+{
+  "agent_id": "reference-agent-icr-example",
+  "agent_type": "reference-agent",
+  "operation": "reserve",
+  "execution_class": "CONTROLLED_SIMULATOR",
+  "authorization_token": "ALLOW",
+  "correlation_id": "icr-validation-example-001",
+  "implementation_continuity_reference": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "input": {
+    "date": "2026-09-12",
+    "time": "20:00",
+    "party_size": 2,
+    "seating_type": "PRIVATE_ROOM",
+    "customer_reference": "TEST-CUST-ICR-EXAMPLE",
+    "idempotency_key": "idem-icr-validation-example-001",
+    "test_scenario": "PENDING"
+  }
+}

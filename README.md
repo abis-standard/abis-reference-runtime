@@ -6,6 +6,18 @@ Reference implementation for executing ABIS Business Interactions against contro
 
 ---
 
+## Current validation target
+
+Unless you are intentionally validating a **historical release**, validate the current public validation surface from the repository's **default branch** and confirm the Runtime version from the Reference Runtime Profile before execution.
+
+Do **not** select an older tag merely because it appears in search results, cached pages, release history, or examples.
+
+If validating a historical release, report that explicitly in your Validation Report.
+
+When live execution is possible, include the Runtime-reported version from `GET /v1/reference-profile` (`runtime.version`) in your report. This is a validation-target freshness rule — not a normative ABIS semantic authority claim.
+
+---
+
 ## What's new in v0.6.0 (vs v0.5.0)
 
 | Area | v0.5.0 | v0.6.0 |
@@ -282,6 +294,8 @@ Example (abbreviated):
 }
 ```
 
+> **Example fixture warning:** Files under `examples/` are documentation and test fixtures. They are **not** evidence that an HTTP request was actually executed. Validation Reports must distinguish fixture content from actually observed Runtime responses.
+
 See also: `examples/reference_runtime_profile.json`
 
 ### 5. Preflight the Interaction
@@ -403,24 +417,50 @@ The same `native_result.external_identifier` is returned. `state.json` retains *
 
 ## Implementation Continuity Reference
 
-Optional non-normative field: `implementation_continuity_reference`.
+Optional non-normative field: `implementation_continuity_reference` (top-level on Invoke requests).
 
 - Generated as UUID v4 when omitted on initial Invoke
-- May be reused across retry/recovery Invokes
-- **Not** ABIS Interaction identity · **not** `external_identifier` · **not** `idempotency_key`
+- May be reused across retry/recovery Invokes and linked Observe requests
+- **Not** ABIS Interaction identity · **not** Business Interaction identity · **not** Decision identity · **not** Outcome identity
+- **Not** `external_identifier` · **not** `idempotency_key`
+- Implementation-scoped correlation only — not semantic sameness, transaction identity, workflow continuity, or business outcome continuity
+
+Worked example (fixture): `examples/restaurant_reserve_with_icr.json`
 
 ---
 
 ## Technical observation (restaurant)
 
-After a `PENDING` Invoke, poll native state:
+Technical flow (implementation observation only):
+
+```text
+Invoke → Native Result → external_identifier → Observe → later/current Native Result snapshot
+```
+
+Boundaries:
+
+- Observe ≠ Completion Determination
+- Observe ≠ Business Outcome Evaluation
+- Observed Native Result ≠ Business Outcome
+
+After a `PENDING` Invoke, poll native state with `POST /v1/demo/restaurant/observe`.
+
+**Request body** (restaurant only; Bearer auth required):
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `correlation_id` | yes | Per-observe request correlation |
+| `external_identifier` | yes | From prior Invoke `native_result.external_identifier` |
+| `implementation_continuity_reference` | no | Optional implementation correlation |
 
 ```bash
 curl -s -X POST http://127.0.0.1:9080/v1/demo/restaurant/observe \
   -H "Authorization: Bearer $ABIS_DEMO_GATEWAY_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"correlation_id":"observe-001","external_identifier":"TEST-RSV-..."}'
+  -d @examples/restaurant_observe_request.json
 ```
+
+Example request fixture: `examples/restaurant_observe_request.json`
 
 `observe` returns a Native Result snapshot only. It does **not** evaluate Business Outcome or perform Completion Determination.
 

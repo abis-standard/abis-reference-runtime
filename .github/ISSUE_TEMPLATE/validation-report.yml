@@ -62,6 +62,38 @@ body:
       required: true
 
   - type: dropdown
+    id: validation_mode
+    attributes:
+      label: Validation Mode
+      options:
+        - Local Runtime Validation
+        - Remote Authorized Runtime Validation
+        - Repository Only
+    validations:
+      required: true
+
+  - type: dropdown
+    id: version_selection
+    attributes:
+      label: Version Selection
+      options:
+        - Current default branch / current public surface
+        - Historical release intentionally selected
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source_inspection_required
+    attributes:
+      label: Source Inspection Required
+      description: Was public Runtime source code required to resolve a documentation ambiguity?
+      options:
+        - No
+        - Yes — DOCUMENTATION_INSUFFICIENT_SOURCE_INSPECTION_REQUIRED
+    validations:
+      required: true
+
+  - type: dropdown
     id: source_of_truth
     attributes:
       label: Source of Truth
