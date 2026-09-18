@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.1",
+  "approval_id": "5EB68B84-4000-4833-8F21-BB7E9C3EF2E6",
+  "binding_type": "content_tree",
+  "approved_content_hash": "e4b749d810de8259e10cb8e534575dfbecc2e15ec8fee055d4e2a601ec9ef07c",
+  "status": "PASS",
+  "controls_passed": [
+    "M229D-003",
+    "M229D-005",
+    "M229D-009",
+    "M229D-010"
+  ],
+  "issued_at": "2026-09-18T06:44:17Z",
+  "expires_at": "2026-09-25T06:44:17Z",
+  "review_context_hash": "e4b749d810de8259e10cb8e534575dfbecc2e15ec8fee055d4e2a601ec9ef07c"
+}
