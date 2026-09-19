@@ -38,6 +38,8 @@ Validation is **not**:
 - Completion Determination
 - a substitute for normative ABIS semantics
 
+**Quick entry (no coding required):** [QUICK-VALIDATION.md](QUICK-VALIDATION.md)
+
 ---
 
 ## What to validate (v0.6.0)

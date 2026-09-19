@@ -211,8 +211,14 @@ Validation is evidence gathering — **not** certification or conformance determ
 Inspect → Test → Record Evidence → Open Issue → Improve ABIS
 ```
 
+| Stage | Link |
+| --- | --- |
+| **Try ABIS** — Quick Validation (no coding required) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
+| **Run ABIS** — full validation guide | [VALIDATION.md](VALIDATION.md) |
+
 | Resource | Link |
 | --- | --- |
+| Quick Validation (starter prompt · ~1–3 min) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
 | Validation guide | [VALIDATION.md](VALIDATION.md) |
 | Agent prompt (copy-ready) | [validation/agent-validation-prompt.md](validation/agent-validation-prompt.md) |
 | Submit Validation Report | [Open Issue — Validation Report](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |

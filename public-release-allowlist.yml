@@ -11,6 +11,7 @@ allowed_paths:
   - CHANGELOG.md
   - LICENSE
   - VALIDATION.md
+  - QUICK-VALIDATION.md
   - pyproject.toml
   - .gitignore
   - public-release-allowlist.yml
