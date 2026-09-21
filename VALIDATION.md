@@ -85,6 +85,175 @@ They are **not** evidence that an HTTP request was actually executed.
 
 Validation Reports must distinguish fixture/example content from **actually observed** Runtime responses. Operations not executed must be marked `NOT_EXECUTED` (or equivalent).
 
+Structured template: [`validation/evidence-report-template.md`](validation/evidence-report-template.md)
+
+---
+
+## Validation scope
+
+Report **one** scope per session:
+
+| Scope | Meaning |
+| --- | --- |
+| **REPOSITORY_ONLY** | Public repository / documentation / examples / source reviewed; Reference Runtime **not** executed in this session |
+| **LIVE_RUNTIME** | One or more Runtime operations **actually executed**; responses **directly observed** in this session |
+| **INCOMPLETE** | Neither path completed — e.g. GitHub access failure, discovery failure, network/DNS/tool limits |
+
+`INCOMPLETE` sessions are valid Public Validation findings — not worthless evidence.
+
+Runtime execution is **not** required for a useful report. If execution is impossible, continue repository-only validation and mark execution-dependent steps `NOT_EXECUTED`.
+
+---
+
+## Evidence provenance
+
+Label each claim with provenance:
+
+| Provenance | Meaning |
+| --- | --- |
+| **DIRECTLY_OBSERVED** | From actual execution or retrieval **in this validation session** |
+| **REPOSITORY_DESCRIBED** | From README, docs, source, fixtures, or examples |
+| **PARTICIPANT_REPORTED** | Self-reported by participant; not independently verified |
+| **AI_INFERRED** | Inferred by AI from multiple inputs |
+| **NOT_EXECUTED** | Operation was not performed |
+| **NOT_OBSERVED** | Field/operation exists but was not observed in the response |
+| **NOT_PROVIDED** | No evidence supplied |
+
+**Rule:** Repository fixtures (including `CONFIRMED` in `examples/`) are **REPOSITORY_DESCRIBED** — not **DIRECTLY_OBSERVED** execution results.
+
+When reporting validation results, distinguish:
+
+- information observed during execution;
+- information described by repository artifacts;
+- participant-reported execution;
+- inferred information;
+- operations not executed.
+
+---
+
+## Execution granularity
+
+Report these **separately**:
+
+| Activity | Notes |
+| --- | --- |
+| Tests | e.g. `./scripts/run_tests.sh`, unit tests |
+| Runtime startup | Gateway / server started |
+| HTTP request | Any HTTP call to the Runtime |
+| Preflight | `POST /v1/demo/{vertical}/preflight` |
+| Invoke | Profile-advertised invoke path |
+| Observe | `POST /v1/demo/restaurant/observe` where applicable |
+
+**Tests successful ≠ Live HTTP validation completed.**
+
+---
+
+## Completion state (operational)
+
+These are **Public Validation operational states** — not normative ABIS statuses:
+
+| State | Meaning |
+| --- | --- |
+| SURVEY_SUBMITTED | Public pilot questionnaire submitted |
+| PROCEDURE_COMPLETED | Assigned procedure followed to completion |
+| REPOSITORY_ONLY_VALIDATION_COMPLETED | Repository-only path completed |
+| LIVE_RUNTIME_VALIDATION_COMPLETED | Live Runtime path completed |
+| EVIDENCE_REVIEWABLE | Third party can review sanitized evidence |
+
+Do not use a single "Completed" to mean all of the above.
+
+Public pilot questionnaire: [`validation/public-pilot/questionnaire.md`](validation/public-pilot/questionnaire.md)
+
+---
+
+## Live execution minimum evidence
+
+Required **only** when claiming **LIVE_RUNTIME** scope for executed operations.
+
+Record sanitized evidence where available. Use **NOT_OBSERVED** or **NOT_PROVIDED** when a field was absent — **do not invent values**.
+
+| Field | Notes |
+| --- | --- |
+| Execution environment | Sanitized |
+| Runtime version | From observed Profile when executed |
+| Executed operation | e.g. Preflight, Invoke |
+| Endpoint | Public localhost or authorized endpoint only |
+| Sanitized request / response excerpt | No secrets |
+| `request_id`, `trace_reference`, `external_identifier` | If present in response |
+| NOT_EXECUTED items | List operations not performed |
+
+**Never publish:** credentials, tokens, secrets, `Authorization` headers, PII.
+
+---
+
+## Execution claim and independent verification
+
+| Field | Values |
+| --- | --- |
+| Execution claim | NONE · PARTICIPANT_REPORTED · EVIDENCE_SUPPORTED |
+| Independent verification | YES · NO |
+
+Participant report ≠ independently verified execution. Sanitized artifacts may support a claim without enabling independent verification.
+
+---
+
+## NOT_IMPLEMENTED vs NOT_EVALUATED (report observed fields)
+
+Do **not** treat these as interchangeable field values. Report the **field name, value, and source** as observed:
+
+| Layer | Example | Provenance typical |
+| --- | --- | --- |
+| Capability / implementation boundary | `outcome_boundary.normative_business_outcome_evaluation: NOT_IMPLEMENTED` in Profile | REPOSITORY_DESCRIBED or DIRECTLY_OBSERVED |
+| Interaction Business Outcome disposition | `outcome_disposition.disposition: NOT_EVALUATED` on Invoke | DIRECTLY_OBSERVED when Invoke executed |
+
+Do not instruct validators to answer with a specific value — report what the Runtime or repository actually shows.
+
+---
+
+## Consistency check (reviewers)
+
+Compare survey answers with submitted evidence. See [`validation/public-pilot/evidence-classification.md`](validation/public-pilot/evidence-classification.md).
+
+| Result | Meaning |
+| --- | --- |
+| CONSISTENT | Survey and evidence align |
+| MISMATCH | Minor or explainable divergence |
+| CONTRADICTORY | Material conflict |
+| INSUFFICIENT_INFORMATION | Cannot compare |
+
+Example flags: SURVEY_EVIDENCE_MISMATCH · EXECUTION_CONTRADICTION · CONCLUSION_OVERCLAIM · POSSIBLE_HALLUCINATION (review flag only — not an accusation)
+
+---
+
+## Conclusion guard
+
+A validation result describes what was **actually inspected or executed in this validation session**.
+
+It does **not** by itself establish:
+
+- ABIS conformance
+- certification
+- implementation completeness
+- AI provider endorsement
+
+Do **not** conclude: conformant, certified, fully compliant, complete specification compliance, or 仕様を完全に満たす.
+
+A successful technical or native result does **not** by itself establish a Business Outcome.
+
+Validation does **not** by itself establish certification, conformance, implementation completeness, or AI provider endorsement.
+
+---
+
+## Evidence classification (reviewers)
+
+Primary: **VALID** · **PARTIAL** · **INVALID**
+
+Review flags (non-exclusive): REPOSITORY_ACCESS_FAILURE · VALIDATION_DISCOVERY_FAILURE · ENVIRONMENT_LIMITATION · PARTICIPANT_REPORTED_EXECUTION · EXECUTION_EVIDENCE_MISSING · SURVEY_EVIDENCE_MISMATCH · CONTRADICTORY_RESPONSE · POSSIBLE_HALLUCINATION · CONCLUSION_OVERCLAIM · SEMANTIC_LAYER_CONFUSION
+
+Full guide: [`validation/public-pilot/evidence-classification.md`](validation/public-pilot/evidence-classification.md)
+
+When citing paid public pilots: payment was for completing the procedure, not for producing a positive result. Do not report pilot counts as "30 conformant validations."
+
 ---
 
 ## Validation modes
@@ -228,10 +397,13 @@ See [`validation/agent-validation-prompt.md`](validation/agent-validation-prompt
 
 ## Submit a report
 
-| Channel | Link |
+| Resource | Link |
 | --- | --- |
 | **Validation Report** | [Open Validation Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
 | **Problem / Ambiguity** | [Open Validation Problem Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-problem.yml) |
+| **Evidence report template** | [validation/evidence-report-template.md](validation/evidence-report-template.md) |
+| **Public pilot questionnaire** | [validation/public-pilot/questionnaire.md](validation/public-pilot/questionnaire.md) |
+| **Evidence classification** | [validation/public-pilot/evidence-classification.md](validation/public-pilot/evidence-classification.md) |
 | **Partnership / organizational** | [abis.coaretail.com](https://abis.coaretail.com/) (outside GitHub Issues) |
 
 ---

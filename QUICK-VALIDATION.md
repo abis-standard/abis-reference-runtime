@@ -44,6 +44,45 @@ Validation is evidence gathering. It is **not** ABIS certification, conformance 
 
 ---
 
+## Validation scope
+
+Report **one** scope for your session:
+
+| Scope | Meaning |
+| --- | --- |
+| **REPOSITORY_ONLY** | You reviewed the public repository / docs / examples / source; you did **not** execute the Runtime in this session |
+| **LIVE_RUNTIME** | You **actually executed** one or more Runtime operations and **directly observed** responses in this session |
+| **INCOMPLETE** | Neither path completed — access, discovery, network, or environment limits. Still valid evidence |
+
+`INCOMPLETE` is **not** worthless. See [VALIDATION.md — Validation scope](VALIDATION.md#validation-scope).
+
+---
+
+## Repository-only fallback
+
+Runtime execution is **not** required for a useful validation report.
+
+If your environment cannot execute the Runtime, continue as far as the public repository allows and mark execution-dependent steps as **NOT_EXECUTED**.
+
+Do not infer live HTTP results from `examples/` or documented fixtures.
+
+---
+
+## Evidence honesty (brief)
+
+When reviewing AI output, check that claims are labeled by source:
+
+| Label | Meaning |
+| --- | --- |
+| Directly observed | From actual execution/retrieval in this session |
+| Repository-described | From README, docs, source, fixtures, examples |
+| Inferred | AI inference — not execution proof |
+| Not executed | Operation was not performed |
+
+Details: [VALIDATION.md — Evidence provenance](VALIDATION.md#evidence-provenance) · [evidence-report-template.md](validation/evidence-report-template.md)
+
+---
+
 ## これは何か
 
 Quick Validation は、ABIS の独立検証プログラムへの最短入口です。
@@ -128,7 +167,11 @@ These prompts intentionally **do not** give away the full validation procedure. 
 ```text
 Please review the following public GitHub repository and validate the ABIS Reference Runtime using only publicly available information.
 
+Distinguish information you directly observed, information described in the repository, inferred information, and operations you did not execute.
+
 Do not report any operation as executed unless it was actually executed in your environment.
+
+Report only what you could actually verify in this session.
 
 If the repository contains validation instructions, follow them.
 
@@ -143,7 +186,11 @@ https://github.com/abis-standard/abis-reference-runtime
 ```text
 以下の公開 GitHub Repository を確認し、公開情報だけを使って ABIS Reference Runtime を検証してください。
 
+実際に確認した情報、Repository に記載されていた情報、推測した情報、実行していない操作を区別してください。
+
 実際に実行できなかった操作は、実行したものとして報告しないでください。
+
+このセッションで検証できた範囲だけを報告してください。
 
 Repository 内に Validation 方法がある場合は、その指示に従ってください。
 
@@ -166,8 +213,13 @@ Do **not** expect success only. Many outcomes are valid validation evidence.
 | Completed Repository-Only Validation | Yes |
 | Found ambiguity or a blocker | Yes |
 | Completed live Runtime validation | Yes (if actually executed) |
+| Session incomplete (access / discovery / environment) | Yes |
 
-If the AI reports HTTP results, check whether they were **actually executed** or inferred from fixtures/examples. Files under `examples/` are documentation fixtures — not proof of execution.
+Classify your session scope: **REPOSITORY_ONLY**, **LIVE_RUNTIME**, or **INCOMPLETE**.
+
+If the AI reports HTTP results, check whether they were **actually executed** or inferred from fixtures/examples. Files under `examples/` are documentation fixtures — **repository-described**, not proof of execution.
+
+Do **not** treat validation success as conformance, certification, or "complete specification compliance".
 
 ---
 
@@ -184,19 +236,26 @@ If the AI reports HTTP results, check whether they were **actually executed** or
 | Repository-Only Validation まで完了した | はい |
 | 曖昧さやブロッカーを発見した | はい |
 | ライブ Runtime 検証を完了した | はい（実際に実行した場合） |
+| セッション未完了（アクセス / 発見 / 環境制限） | はい |
 
-AI が HTTP 結果を報告した場合、**実際に実行した**のか、`examples/` などのフィクスチャから推測したのかを確認してください。`examples/` 配下のファイルはドキュメント用フィクスチャであり、実行の証拠ではありません。
+セッション scope を分類してください: **REPOSITORY_ONLY** / **LIVE_RUNTIME** / **INCOMPLETE**
+
+AI が HTTP 結果を報告した場合、**実際に実行した**のか、`examples/` などのフィクスチャから推測したのかを確認してください。`examples/` 配下は **Repository 記載情報**であり、実行の証拠ではありません。
+
+検証結果を適合・認証・「仕様を完全に満たす」と結論づけないでください。
 
 ---
 
 ## Step 4 (optional) — Submit formal evidence
 
-When you want to share results with the ABIS public validation program, use the **existing** GitHub Issue forms. No changes to those forms are required for Quick Validation.
+When you want to share results with the ABIS public validation program, use the **existing** GitHub Issue forms or the structured template.
 
 | Channel | Link |
 | --- | --- |
 | **Validation Report** | [Open Validation Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
 | **Problem / Ambiguity** | [Open Validation Problem Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-problem.yml) |
+| **Evidence report template** | [validation/evidence-report-template.md](validation/evidence-report-template.md) |
+| **Public pilot questionnaire** | [validation/public-pilot/questionnaire.md](validation/public-pilot/questionnaire.md) |
 
 For the full validation guide (all modes, semantic boundaries, agent prompt): [VALIDATION.md](VALIDATION.md)
 
@@ -206,12 +265,14 @@ For developer execution (clone, localhost gateway, curl): [README.md — Quick S
 
 ## ステップ 4（任意）— 正式なエビデンスを提出
 
-ABIS 公開検証プログラムに結果を共有したい場合は、**既存の** GitHub Issue フォームを使います。Quick Validation のためにフォーム変更は不要です。
+ABIS 公開検証プログラムに結果を共有したい場合は、**既存の** GitHub Issue フォームまたは構造化テンプレートを使います。
 
 | チャネル | リンク |
 | --- | --- |
 | **Validation Report** | [Validation Report Issue を開く](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
 | **Problem / Ambiguity** | [Validation Problem Issue を開く](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-problem.yml) |
+| **Evidence report template** | [validation/evidence-report-template.md](validation/evidence-report-template.md) |
+| **Public pilot questionnaire** | [validation/public-pilot/questionnaire.md](validation/public-pilot/questionnaire.md) |
 
 完全な検証ガイド（全モード・意味論的境界・エージェント用プロンプト）: [VALIDATION.md](VALIDATION.md)
 

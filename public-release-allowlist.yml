@@ -2,7 +2,7 @@
 # M229D-006 — default: UNKNOWN_NOT_PUBLIC
 
 version: "0.1"
-updated: "2026-09-18"
+updated: "2026-09-21"
 repository: abis-standard/abis-reference-runtime
 default_rule: UNKNOWN_NOT_PUBLIC
 

@@ -216,10 +216,15 @@ Inspect → Test → Record Evidence → Open Issue → Improve ABIS
 | **Try ABIS** — Quick Validation (no coding required) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
 | **Run ABIS** — full validation guide | [VALIDATION.md](VALIDATION.md) |
 
+Quick Validation can produce useful evidence even when your environment cannot execute the Reference Runtime.
+
 | Resource | Link |
 | --- | --- |
 | Quick Validation (starter prompt · ~1–3 min) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
 | Validation guide | [VALIDATION.md](VALIDATION.md) |
+| Evidence report template | [validation/evidence-report-template.md](validation/evidence-report-template.md) |
+| Public pilot questionnaire | [validation/public-pilot/questionnaire.md](validation/public-pilot/questionnaire.md) |
+| Evidence classification (reviewers) | [validation/public-pilot/evidence-classification.md](validation/public-pilot/evidence-classification.md) |
 | Agent prompt (copy-ready) | [validation/agent-validation-prompt.md](validation/agent-validation-prompt.md) |
 | Submit Validation Report | [Open Issue — Validation Report](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
 | Report problem / ambiguity | [Open Issue — Validation Problem](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-problem.yml) |

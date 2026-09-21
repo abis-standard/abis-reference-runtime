@@ -15,6 +15,10 @@ body:
 
         See [VALIDATION.md](https://github.com/abis-standard/abis-reference-runtime/blob/main/VALIDATION.md) for the full guide.
 
+        Templates: [evidence-report-template.md](https://github.com/abis-standard/abis-reference-runtime/blob/main/validation/evidence-report-template.md) · [public-pilot questionnaire](https://github.com/abis-standard/abis-reference-runtime/blob/main/validation/public-pilot/questionnaire.md)
+
+        Label provenance: observed vs repository-described vs inferred vs not executed. Tests ≠ Live HTTP validation.
+
   - type: dropdown
     id: reporter_type
     attributes:
@@ -58,6 +62,18 @@ body:
       label: Scenario
       description: "Example: restaurant / reserve / CONTROLLED_SIMULATOR"
       placeholder: restaurant / reserve / CONTROLLED_SIMULATOR
+    validations:
+      required: true
+
+  - type: dropdown
+    id: validation_scope
+    attributes:
+      label: Validation Scope
+      description: Session-level scope — not normative ABIS status
+      options:
+        - REPOSITORY_ONLY
+        - LIVE_RUNTIME
+        - INCOMPLETE
     validations:
       required: true
 
@@ -111,6 +127,58 @@ body:
       label: Human / Private Assistance Required
       description: What additional information had to be supplied beyond public materials? Leave blank if none.
       placeholder: Describe any manual explanation, private docs, or credentials setup assistance (do not paste secrets).
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Execution granularity
+
+        Mark each activity separately. Tests successful ≠ Live HTTP validation completed.
+
+  - type: checkboxes
+    id: execution_granularity
+    attributes:
+      label: Activities actually executed in this session
+      options:
+        - label: Tests (run_tests.sh / unit tests)
+        - label: Runtime startup (gateway / server)
+        - label: HTTP request (any)
+        - label: Preflight
+        - label: Invoke
+        - label: Observe
+
+  - type: dropdown
+    id: execution_claim
+    attributes:
+      label: Execution Claim
+      options:
+        - NONE
+        - PARTICIPANT_REPORTED
+        - EVIDENCE_SUPPORTED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: independent_verification
+    attributes:
+      label: Independent Verification
+      description: Can a third party verify execution from sanitized evidence in this report?
+      options:
+        - "NO"
+        - "YES"
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence_provenance
+    attributes:
+      label: Evidence Provenance Notes
+      description: |
+        Label major claims: DIRECTLY_OBSERVED, REPOSITORY_DESCRIBED, PARTICIPANT_REPORTED, AI_INFERRED, NOT_EXECUTED, NOT_OBSERVED, NOT_PROVIDED.
+        Repository fixtures are not execution evidence.
+      placeholder: |
+        Profile fields — REPOSITORY_DESCRIBED (from README example)
+        POST /v1/demo/restaurant/preflight — NOT_EXECUTED (repository-only session)
 
   - type: markdown
     attributes:
@@ -233,9 +301,12 @@ body:
   - type: dropdown
     id: business_outcome
     attributes:
-      label: Business Outcome
+      label: Observed Business Outcome Disposition
+      description: Report the disposition field as observed. Do not interchange with Profile NOT_IMPLEMENTED.
       options:
-        - NOT_EVALUATED
+        - NOT_EVALUATED (observed on Invoke response)
+        - NOT_OBSERVED (Invoke not executed or field absent)
+        - NOT_APPLICABLE (repository-only session)
     validations:
       required: true
 
@@ -263,7 +334,8 @@ body:
     id: final_verdict
     attributes:
       label: Final Verdict
-      description: Short summary (e.g. PASS WITH AMBIGUITIES, BLOCKED AT INVOKE).
+      description: Short summary of what was inspected or executed (e.g. REPOSITORY_ONLY — PASS WITH AMBIGUITIES). Do not claim conformant, certified, or fully compliant.
+      placeholder: REPOSITORY_ONLY — PASS WITH AMBIGUITIES
     validations:
       required: true
 
@@ -272,11 +344,15 @@ body:
     attributes:
       label: Attestations
       options:
-        - label: I distinguished actually executed operations from planned/inferred operations.
+        - label: I distinguished actually executed operations from planned/inferred/fixture-derived operations.
+          required: true
+        - label: I labeled evidence provenance where practical (observed / repository-described / inferred / not executed).
           required: true
         - label: I removed credentials, tokens, PII, and secrets from this report.
           required: true
         - label: I did not automatically treat Native Result or technical status as Business Outcome.
+          required: true
+        - label: I did not claim ABIS conformance, certification, complete specification compliance, or AI provider endorsement.
           required: true
         - label: I understand this report is validation evidence, not ABIS certification or conformance determination.
           required: true
