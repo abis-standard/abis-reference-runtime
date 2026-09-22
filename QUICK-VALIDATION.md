@@ -16,8 +16,8 @@ No coding required for Repository-Only Validation.
 
 **ABISをAIで試してみる**
 
-専門知識やプログラミングは必要ありません。  
-普段利用しているAIに公開Repositoryを渡し、AIがABIS Reference Runtimeをどこまで自力で理解・検証できるか確認できます。
+プログラミングやGitHubの専門知識は必要ありません。  
+普段利用している生成AIの入力欄へ、下記スタータープロンプト（**生成AIへ入力するための文章**）をそのまま貼り付けて送信してください。AIがABIS Reference Runtimeをどこまで自力で理解・検証できるか確認できます。
 
 ---
 
@@ -35,8 +35,10 @@ You do **not** need:
 
 You **do** need:
 
-- an AI assistant you already use (any provider)
-- about 1–3 minutes to copy a starter prompt and review the result
+- a generative AI assistant you already use (any provider)
+- about 1–3 minutes to copy a **starter prompt** (ready-to-paste text for the AI input), paste it into the chat input, send it, and review the result
+
+**Human step vs execution:** Pasting and sending the starter prompt is **not** the same as executing Tests, the Runtime, or HTTP requests.
 
 Quick Validation uses **Repository-Only Validation** when live Runtime execution is not available. That mode is defined in [VALIDATION.md](VALIDATION.md). This page does not replace that guide — it helps you start.
 
@@ -97,8 +99,10 @@ Quick Validation は、ABIS の独立検証プログラムへの最短入口で�
 
 **必要なもの**
 
-- 普段使っている AI アシスタント（プロバイダは問いません）
-- スタータープロンプトをコピーして結果を確認する 1〜3 分程度
+- 普段使っている生成AI（プロバイダは問いません）
+- スタータープロンプト（生成AIへ入力するための文章）をコピーし、入力欄へ貼り付けて送信し、結果を確認する 1〜3 分程度
+
+**人間の操作と実行の区別:** スタータープロンプトの貼り付け・送信は、Tests / Runtime / HTTP などの**実行**とは別の操作です。
 
 Quick Validation では、Runtime を実行できない場合に **Repository-Only Validation** を利用します。このモードの定義は [VALIDATION.md](VALIDATION.md) にあります。本ページはそのガイドに取って代わるものではなく、開始を支援します。
 
@@ -109,10 +113,13 @@ Quick Validation では、Runtime を実行できない場合に **Repository-On
 ## Beginner flow (3 steps)
 
 ```text
-Open your AI assistant
-  → Copy a starter prompt below
+Open your generative AI assistant
+  → Copy a starter prompt below (text to paste into the AI input)
+  → Paste into the chat input and send
   → Review the AI's validation result
 ```
+
+Sending the starter prompt is a human input step — not Runtime, HTTP, or test execution.
 
 Optional next step: submit evidence through the existing GitHub Issue forms (links at the bottom).
 
@@ -121,10 +128,13 @@ Optional next step: submit evidence through the existing GitHub Issue forms (lin
 ## 初めての流れ（3ステップ）
 
 ```text
-普段使う AI アシスタントを開く
-  → 下のスタータープロンプトをコピー
+普段使う生成AIを開く
+  → 下のスタータープロンプト（生成AIへ入力するための文章）をコピー
+  → 生成AIの入力欄へそのまま貼り付けて送信
   → AI の検証結果を確認
 ```
+
+スタータープロンプトの貼り付け・送信は人間の入力操作であり、Runtime / HTTP / Tests の実行ではありません。
 
 任意の次のステップ: 既存の GitHub Issue フォームからエビデンスを提出（ページ末尾のリンク）。
 
@@ -146,17 +156,25 @@ ChatGPT、Claude、Gemini、Grok、Copilot、カスタムエージェントな�
 
 ---
 
-## Step 2 — Copy a starter prompt
+## Step 2 — Copy and send a starter prompt
 
-Choose **English** or **Japanese**. Paste the prompt into your AI assistant.
+The blocks below are **starter prompts** — ready-to-paste text for your generative AI input. They are **not** commands to run locally.
+
+Choose **English** or **Japanese**. Copy the block, paste it into your AI chat input, and send it.
+
+Sending the starter prompt is a **human input step**. It is **not** the same as executing Tests, starting the Runtime, or sending HTTP requests.
 
 These prompts intentionally **do not** give away the full validation procedure. The goal includes checking whether an AI can discover validation methods from the public repository alone.
 
 ---
 
-## ステップ 2 — スタータープロンプトをコピー
+## ステップ 2 — スタータープロンプトをコピーして送信
 
-**English** または **日本語** を選び、AI アシスタントに貼り付けてください。
+下記のブロックは **スタータープロンプト** — **生成AIへ入力するための文章**です。ローカルで実行するコマンドではありません。
+
+**English** または **日本語** を選び、ブロックをコピーし、**生成AIの入力欄へそのまま貼り付けて送信**してください。
+
+スタータープロンプトの貼り付け・送信は **人間の入力操作** です。Tests の実行、Runtime の起動、HTTP リクエストの送信とは**別の操作**です。
 
 これらのプロンプトは、検証手順の正解を最初から教えません。公開 Repository だけから AI が検証方法を自力で発見できるかも確認目的の一部です。
 
