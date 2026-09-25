@@ -20,7 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from abis_grp_runtime.adapters.http_adapter_config import RestaurantHttpAdapterConfig  # noqa: E402
 from abis_grp_runtime.adapters.restaurant import RestaurantBusinessAdapter  # noqa: E402
 from abis_grp_runtime.connectors.authorized_http_sandbox import AuthorizedHttpSandboxConnector  # noqa: E402
-from abis_grp_runtime.connectors.non_production_egress import EnvironmentClassification  # noqa: E402
+from abis_grp_runtime.connectors.non_production_egress import (  # noqa: E402
+    EnvironmentClassification,
+    TargetMode,
+)
 from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.execution import ExecutionClass, resolve_execution_disposition  # noqa: E402
 from abis_grp_runtime.gateway.execution_surface import find_advertised_interaction  # noqa: E402
@@ -77,11 +80,16 @@ class AuthorizedHttpRestaurantTestCase(unittest.TestCase):
             enabled=True,
             adapter_id="restaurant-http-sandbox-test",
             allowlist_id="test-local-mock-v1",
+            target_mode=TargetMode.LOCALHOST_MOCK,
+            target_authorization_id="test-local-mock-v1",
+            authorized_hostname="127.0.0.1",
+            authorized_port=port,
             base_url=f"http://127.0.0.1:{port}",
             allowed_paths=("/sandbox/v1/reservations",),
             environment_classification=EnvironmentClassification.MOCK,
             timeout_seconds=3.0,
             max_response_bytes=65536,
+            max_request_body_bytes=16384,
             mapping_version="1",
         )
 
@@ -209,11 +217,16 @@ class AuthorizedHttpRestaurantTestCase(unittest.TestCase):
             enabled=bad.enabled,
             adapter_id=bad.adapter_id,
             allowlist_id=bad.allowlist_id,
+            target_mode=bad.target_mode,
+            target_authorization_id=bad.target_authorization_id,
+            authorized_hostname="192.168.1.50",
+            authorized_port=8080,
             base_url="http://192.168.1.50:8080",
             allowed_paths=bad.allowed_paths,
             environment_classification=bad.environment_classification,
             timeout_seconds=bad.timeout_seconds,
             max_response_bytes=bad.max_response_bytes,
+            max_request_body_bytes=bad.max_request_body_bytes,
             mapping_version=bad.mapping_version,
         )
         connector = AuthorizedHttpSandboxConnector(bad)

@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.8.0 — Developer Preview (remote authorized Sandbox HTTPS)
+
+### Added
+
+- `TargetMode` (`LOCALHOST_MOCK`, `REMOTE_AUTHORIZED`) and `ValidatedDestination` — single DNS resolution with TCP connect to `selected_ip` (F01 DNS/connection binding)
+- `bound_https_transport` / `bound_http_transport` — TLS verification (system trust store) and bound HTTP for localhost mock
+- Remote authorized Sandbox HTTPS for `restaurant` / `reserve` under `AUTHORIZED_NON_PRODUCTION` when trusted configuration is complete
+- `max_request_body_bytes` outbound bound; extended sanitized `execution_provenance` (`target_authorization_id`, `target_mode`, `transport.tls`)
+- D-11B-04 security test matrix (`tests/test_d11b04_remote_sandbox_security.py`)
+
+### Changed
+
+- Runtime `0.8.0`; `execution_surface_revision`: `reference-execution-surface-6`
+- Profile **remains v5** — public advertised execution classes unchanged; remote HTTPS is an implementation capability under existing `AUTHORIZED_NON_PRODUCTION` metadata
+
+### Unchanged boundaries
+
+- `REAL_EXECUTION = PROHIBITED`, `REAL_EXTERNAL` denied, production/unknown environment denied
+- Native Result ≠ Business Outcome (`NOT_EVALUATED`); no external Observe; shopping remote not implemented
+- No automatic fallback to `CONTROLLED_SIMULATOR` on adapter failure
+
 ## v0.7.0 — Developer Preview (authorized non-production external adapter)
 
 ### Added

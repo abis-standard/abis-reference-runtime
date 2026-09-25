@@ -28,7 +28,7 @@ body:
 
         Default integration path: **mapping + Controlled Simulator** (no HTTP to your external Sandbox/Mock).
 
-        v0.7.0 `AUTHORIZED_NON_PRODUCTION`: **localhost Mock HTTP only** when locally configured — remote company-hosted Sandbox endpoints remain prohibited. Do not paste private endpoint URLs.
+        v0.8.0 `AUTHORIZED_NON_PRODUCTION`: **localhost Mock HTTP** (v0.7.0+) or **trusted remote Sandbox HTTPS** (v0.8.0+, restaurant/reserve only) when locally configured — not production, not REAL_EXTERNAL. Do not paste secrets or private credentials.
 
   - type: input
     id: reporter

@@ -1,10 +1,10 @@
 {
   "profile_kind": "abis-reference-runtime-profile",
   "profile_version": 5,
-  "execution_surface_revision": "reference-execution-surface-5",
+  "execution_surface_revision": "reference-execution-surface-6",
   "runtime": {
     "name": "abis-reference-runtime",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "authority": {
     "semantic": "NONE",
