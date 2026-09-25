@@ -12,6 +12,7 @@ allowed_paths:
   - LICENSE
   - VALIDATION.md
   - QUICK-VALIDATION.md
+  - INTEGRATION.md
   - pyproject.toml
   - .gitignore
   - public-release-allowlist.yml

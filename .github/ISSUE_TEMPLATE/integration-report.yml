@@ -1,0 +1,192 @@
+name: ABIS Integration Report
+description: Report evidence from a Sandbox / Mock ABIS integration experiment with the Reference Runtime.
+title: "[Integration] "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Sandbox / Mock integration evidence
+
+        Report **integration evidence** from a non-production environment — **not** ABIS certification or conformance determination.
+
+        **Unsuccessful attempts are valid evidence.** A negative result does not block submission.
+
+        ### DO NOT SUBMIT
+
+        - credentials or production API keys
+        - bearer tokens or `Authorization` headers
+        - passwords, cookies, session secrets
+        - PII or confidential business data
+        - private or internal-only URLs
+
+        Guide: [INTEGRATION.md](https://github.com/abis-standard/abis-reference-runtime/blob/main/INTEGRATION.md)
+
+        Distinguish **ACTUALLY_EXECUTED** vs **NOT_EXECUTED** vs **REPOSITORY_DESCRIBED**.  
+        Native Result ≠ Business Outcome. **REAL_EXECUTION PROHIBITED** — Sandbox / Mock / synthetic dev only.
+
+        v0.6.0 integration path: **mapping + Controlled Simulator** — the Runtime does not invoke your external Sandbox/Mock over HTTP unless a later Runtime version explicitly advertises that capability.
+
+  - type: input
+    id: reporter
+    attributes:
+      label: Reporter / Organization
+      description: Optional. Sanitized name only — no contact secrets.
+      placeholder: "e.g. Acme Corp Engineering (sandbox team)"
+
+  - type: dropdown
+    id: implementation_environment
+    attributes:
+      label: Implementation Environment
+      description: Non-production controlled environment only
+      options:
+        - Sandbox
+        - Mock
+        - Simulator
+        - Development / synthetic data
+        - Other controlled non-production environment
+    validations:
+      required: true
+
+  - type: dropdown
+    id: interaction
+    attributes:
+      label: Interaction
+      options:
+        - restaurant / reserve
+        - shopping / submit_order
+        - other mapping experiment
+    validations:
+      required: true
+
+  - type: input
+    id: runtime_version
+    attributes:
+      label: Reference Runtime Version
+      description: From Profile `runtime.version` when executed, or documented target.
+      placeholder: v0.6.0
+    validations:
+      required: true
+
+  - type: input
+    id: external_operation
+    attributes:
+      label: External / Mock Operation Mapped
+      description: Sanitized name or path of your non-production operation (no secrets).
+      placeholder: "e.g. POST /v1/sandbox/reservations (synthetic)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: mapping_notes
+    attributes:
+      label: Mapping Notes
+      description: How external fields map to Runtime Preflight/Invoke inputs.
+      placeholder: |
+        Sandbox slot.date → Invoke input.date
+        Sandbox guests → Invoke input.party_size
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: activities_executed
+    attributes:
+      label: Activities actually executed in this session
+      options:
+        - label: Profile (GET /v1/reference-profile)
+        - label: Descriptor (GET descriptor_path)
+        - label: Preflight
+        - label: Invoke
+        - label: Observe
+
+  - type: textarea
+    id: actual_requests
+    attributes:
+      label: Actual Requests (sanitized)
+      description: Label each line ACTUALLY_EXECUTED or NOT_EXECUTED. Omit Authorization values.
+      placeholder: |
+        GET /v1/reference-profile — ACTUALLY_EXECUTED
+        POST /v1/demo/restaurant/preflight — ACTUALLY_EXECUTED
+        POST /v1/demo/restaurant/invoke — ACTUALLY_EXECUTED (Bearer redacted)
+    validations:
+      required: true
+
+  - type: textarea
+    id: native_result
+    attributes:
+      label: Native Result
+      description: Technical/native observation only. Do not state Business Outcome conclusions.
+      placeholder: external_status, external_identifier, technical_status (sanitized excerpts)
+
+  - type: textarea
+    id: evidence_trace
+    attributes:
+      label: Evidence / Trace
+      description: execution_provenance, trace_reference, external_identifier — no secrets.
+      placeholder: trace_reference, execution_provenance excerpts
+
+  - type: textarea
+    id: not_executed
+    attributes:
+      label: Operations NOT_EXECUTED
+      description: Explicit list (e.g. Observe not applicable for shopping).
+      placeholder: Observe — NOT_EXECUTED (not advertised for shopping/submit_order)
+
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Blockers / Ambiguity
+      description: What stopped or complicated the experiment?
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_docs
+    attributes:
+      label: Additional Documentation Required
+      description: Gaps in public docs discovered during integration (optional).
+
+  - type: dropdown
+    id: outcome_disposition
+    attributes:
+      label: Outcome Disposition Observed
+      description: Report Invoke `outcome_disposition` when Invoke ran. Do not interchange NOT_IMPLEMENTED (Profile) with NOT_EVALUATED (Invoke).
+      options:
+        - NOT_EVALUATED (observed on Invoke)
+        - NOT_OBSERVED (Invoke not executed or field absent)
+        - NOT_APPLICABLE (no Invoke in this session)
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment_description
+    attributes:
+      label: Sanitized Environment Description
+      description: OS, local gateway port, synthetic data policy — no private URLs.
+      placeholder: macOS, local gateway :9080, EXTERNAL_TEST, synthetic customer_ref only
+
+  - type: input
+    id: integration_verdict
+    attributes:
+      label: Integration Verdict (short)
+      description: e.g. PARTIAL — Preflight OK, Invoke blocked. Do not claim conformant or certified.
+      placeholder: PARTIAL — mapping documented, Invoke ACTUALLY_EXECUTED
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: attestations
+    attributes:
+      label: Attestations
+      options:
+        - label: I used Sandbox / Mock / synthetic non-production scope only (REAL_EXECUTION PROHIBITED).
+          required: true
+        - label: I distinguished ACTUALLY_EXECUTED from NOT_EXECUTED and REPOSITORY_DESCRIBED.
+          required: true
+        - label: I removed credentials, tokens, PII, and secrets from this report.
+          required: true
+        - label: I did not treat Native Result or technical status as Business Outcome.
+          required: true
+        - label: I understand this report is integration evidence, not ABIS certification or conformance determination.
+          required: true
