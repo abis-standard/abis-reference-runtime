@@ -65,6 +65,13 @@ This path is **separate** from [Quick Validation](QUICK-VALIDATION.md). Quick Va
 
 ---
 
+## Controlled external interoperability (D-11C)
+
+Operational package for a **third-party non-production Sandbox** interoperability test (`restaurant` / `reserve`, `AUTHORIZED_NON_PRODUCTION`, remote HTTPS): [docs/interop/d11c/](docs/interop/d11c/).  
+This path is documentation only — it does **not** assert that interoperability has occurred, and it is **not** conformance or certification.
+
+---
+
 ## Published starting points (v0.8.0)
 
 | Vertical | Operation | Example walkthrough |
