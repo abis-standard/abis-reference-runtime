@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
 import time
-from http.client import HTTPConnection, HTTPException, HTTPSConnection
+from http.client import HTTPException
 from typing import Any, Mapping
-from urllib.parse import urlparse
 
 from abis_grp_runtime.adapters.http_adapter_config import RestaurantHttpAdapterConfig
+from abis_grp_runtime.connectors.bound_http_transport import http_post_json as bound_http_post_json
+from abis_grp_runtime.connectors.bound_https_transport import https_post_json as bound_https_post_json
 from abis_grp_runtime.connectors.non_production_egress import (
     EgressDecision,
     NonProductionEgressPolicy,
+    TargetMode,
+    ValidatedDestination,
 )
 from abis_grp_runtime.connector import BusinessConnectorPort
 from abis_grp_runtime.native_result import NativeResultEnvelope
@@ -22,20 +26,31 @@ MAPPING_VERSION_DEFAULT = "1"
 
 class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
     """
-    Restaurant reserve → localhost Mock HTTP server.
+    Restaurant reserve → authorized non-production HTTP(S) boundary.
 
     Control metadata is exposed via consume_execution_metadata(), not NativeResult payload.
     """
 
     connector_id = "authorized-http-sandbox-restaurant"
 
-    def __init__(self, config: RestaurantHttpAdapterConfig) -> None:
+    def __init__(
+        self,
+        config: RestaurantHttpAdapterConfig,
+        *,
+        policy: NonProductionEgressPolicy | None = None,
+        ssl_context_factory: Any | None = None,
+    ) -> None:
         self._config = config
-        self._policy = NonProductionEgressPolicy(
+        self._ssl_context_factory = ssl_context_factory
+        self._policy = policy or NonProductionEgressPolicy(
             allowlist_id=config.allowlist_id,
-            base_url=config.base_url,
+            target_mode=config.target_mode,
+            authorized_hostname=config.authorized_hostname,
+            authorized_port=config.authorized_port,
             allowed_paths=config.allowed_paths,
             environment_classification=config.environment_classification,
+            target_authorization_id=config.target_authorization_id,
+            base_url=config.base_url,
         )
         self._last_metadata: dict[str, Any] = {}
 
@@ -49,22 +64,30 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
         external_response_received: bool,
         egress_decision: str,
         egress_reason: str,
+        destination: ValidatedDestination | None = None,
+        tls_verified: bool = False,
     ) -> None:
-        self._last_metadata = {
+        egress: dict[str, Any] = {
+            "decision": egress_decision,
+            "allowlist_id": self._config.allowlist_id,
+            "reason": egress_reason,
+            "target_mode": self._config.target_mode.value,
+        }
+        meta: dict[str, Any] = {
             "connector": {
                 "id": self._config.adapter_id,
                 "kind": CONNECTOR_KIND,
             },
             "mapping_version": self._config.mapping_version,
             "environment_classification": self._config.environment_classification.value,
-            "egress": {
-                "decision": egress_decision,
-                "allowlist_id": self._config.allowlist_id,
-                "reason": egress_reason,
-            },
+            "target_authorization_id": self._config.target_authorization_id,
+            "egress": egress,
             "external_request_attempted": external_request_attempted,
             "external_response_received": external_response_received,
         }
+        if destination is not None and destination.target_mode is TargetMode.REMOTE_AUTHORIZED:
+            meta["transport"] = {"tls": "VERIFIED" if tls_verified else "NOT_ATTEMPTED"}
+        self._last_metadata = meta
 
     def _failure(
         self,
@@ -75,12 +98,14 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
         received: bool = False,
         egress_decision: str = "DENY",
         egress_reason: str = "",
+        destination: ValidatedDestination | None = None,
     ) -> NativeResultEnvelope:
         self._set_metadata(
             external_request_attempted=attempted,
             external_response_received=received,
             egress_decision=egress_decision,
             egress_reason=egress_reason or message,
+            destination=destination,
         )
         return NativeResultEnvelope(
             technical_status="TRANSPORT_FAILED",
@@ -102,8 +127,8 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
             return self._failure("AUTH_CONFIG_MISSING", "required credential reference not available")
 
         path = self._config.allowed_paths[0] if self._config.allowed_paths else ""
-        request_url, verdict = self._policy.resolve_request_url(path)
-        if verdict.decision is EgressDecision.DENY or not request_url:
+        destination, verdict = self._policy.resolve_validated_destination(path)
+        if verdict.decision is EgressDecision.DENY or destination is None:
             return self._failure(
                 "EGRESS_DENIED",
                 verdict.reason,
@@ -118,11 +143,22 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 "structured input mapping failed",
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
+            )
+
+        payload = json.dumps(body).encode("utf-8")
+        if len(payload) > self._config.max_request_body_bytes:
+            return self._failure(
+                "REQUEST_TOO_LARGE",
+                "request body exceeds size limit",
+                egress_decision="ALLOW",
+                egress_reason=verdict.reason,
+                destination=destination,
             )
 
         started = time.monotonic()
         try:
-            status, response_bytes, content_type = self._http_post(request_url, body)
+            status, response_bytes, content_type = self._send_request(destination, payload)
         except TimeoutError:
             return self._failure(
                 "NETWORK_TIMEOUT",
@@ -130,14 +166,16 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 attempted=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
-        except (HTTPException, OSError) as exc:
+        except (HTTPException, OSError):
             return self._failure(
                 "NETWORK_ERROR",
-                str(exc),
+                "transport failure",
                 attempted=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
         timing_ms = int((time.monotonic() - started) * 1000)
@@ -149,6 +187,7 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 attempted=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
         if 400 <= status < 500:
@@ -159,6 +198,7 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
         if status >= 500:
             return self._failure(
@@ -168,6 +208,7 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
         if not content_type.lower().startswith("application/json"):
@@ -178,6 +219,7 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
         if len(response_bytes) > self._config.max_response_bytes:
@@ -188,6 +230,7 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
         try:
@@ -200,6 +243,7 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
         native = self._map_response(parsed, timing_ms=timing_ms)
@@ -211,15 +255,52 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
+                destination=destination,
             )
 
+        tls_verified = destination.target_mode is TargetMode.REMOTE_AUTHORIZED
         self._set_metadata(
             external_request_attempted=True,
             external_response_received=True,
             egress_decision="ALLOW",
             egress_reason=verdict.reason,
+            destination=destination,
+            tls_verified=tls_verified,
         )
         return native
+
+    def _auth_headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        cred_var = self._config.credential_env_var
+        if cred_var:
+            token = os.environ.get(cred_var, "").strip()
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
+        return headers
+
+    def _send_request(self, destination: ValidatedDestination, payload: bytes) -> tuple[int | None, bytes, str]:
+        headers = self._auth_headers()
+        timeout = self._config.timeout_seconds
+        path = destination.request_path
+        if destination.target_mode is TargetMode.REMOTE_AUTHORIZED:
+            ssl_context = self._ssl_context_factory() if self._ssl_context_factory else None
+            return bound_https_post_json(
+                destination,
+                path=path,
+                headers=headers,
+                body=payload,
+                timeout=timeout,
+                max_response_bytes=self._config.max_response_bytes,
+                ssl_context=ssl_context,
+            )
+        return bound_http_post_json(
+            destination,
+            path=path,
+            headers=headers,
+            body=payload,
+            timeout=timeout,
+            max_response_bytes=self._config.max_response_bytes,
+        )
 
     def _map_request(self, ctx: Mapping[str, Any]) -> dict[str, Any] | None:
         try:
@@ -254,46 +335,3 @@ class AuthorizedHttpSandboxConnector(BusinessConnectorPort):
                 "semantic_authority": "NONE",
             },
         )
-
-    def _http_post(self, url: str, body: dict[str, Any]) -> tuple[int | None, bytes, str]:
-        parsed = urlparse(url)
-        payload = json.dumps(body).encode("utf-8")
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        cred_var = self._config.credential_env_var
-        if cred_var:
-            import os
-
-            token = os.environ.get(cred_var, "").strip()
-            if token:
-                headers["Authorization"] = f"Bearer {token}"
-
-        timeout = self._config.timeout_seconds
-        if parsed.scheme == "https":
-            conn: HTTPConnection | HTTPSConnection = HTTPSConnection(
-                parsed.hostname or "localhost",
-                port=parsed.port or 443,
-                timeout=timeout,
-            )
-        else:
-            conn = HTTPConnection(
-                parsed.hostname or "127.0.0.1",
-                port=parsed.port or 80,
-                timeout=timeout,
-            )
-
-        path = parsed.path or "/"
-        if parsed.query:
-            path = f"{path}?{parsed.query}"
-
-        conn.request("POST", path, body=payload, headers=headers)
-        response = conn.getresponse()
-        # Do not follow redirects — treat 3xx as failure
-        if 300 <= response.status < 400:
-            conn.close()
-            raise HTTPException(f"redirect not permitted: {response.status}")
-
-        data = response.read(self._config.max_response_bytes + 1)
-        content_type = response.getheader("Content-Type", "")
-        status = response.status
-        conn.close()
-        return status, data, content_type

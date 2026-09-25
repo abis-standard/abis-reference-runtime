@@ -5,7 +5,9 @@
 
 **Default (all versions):** **mapping documentation + `CONTROLLED_SIMULATOR` Invoke** — the Runtime does **not** call your external Sandbox or Mock over HTTP.
 
-**Optional v0.7.0:** `AUTHORIZED_NON_PRODUCTION` may use a **localhost Mock HTTP** server only (`scripts/mock_restaurant_http_server.py`). Remote company-hosted Sandbox URLs remain **prohibited** in the v0.7.0 Reference implementation.
+**Optional v0.7.0:** `AUTHORIZED_NON_PRODUCTION` may use a **localhost Mock HTTP** server only (`scripts/mock_restaurant_http_server.py`).
+
+**Optional v0.8.0:** `AUTHORIZED_NON_PRODUCTION` may additionally use an **explicitly configured remote non-production Sandbox HTTPS** endpoint for `restaurant` / `reserve` when trusted Runtime configuration declares hostname, port, path, credential reference, and environment classification. This is **not** production access, **not** `REAL_EXTERNAL`, and **not** a generic URL proxy.
 
 ---
 
@@ -116,13 +118,29 @@ Record from **your** session when executed:
 - `execution_provenance`, `trace_reference`
 - `outcome_disposition.disposition` → expect **`NOT_EVALUATED`** (Business Outcome evaluation is outside Runtime scope)
 
-### Optional: `AUTHORIZED_NON_PRODUCTION` (v0.7.0 · localhost Mock HTTP only)
+### Optional: `AUTHORIZED_NON_PRODUCTION` — localhost Mock (v0.7.0+)
 
 1. Start `python3 scripts/mock_restaurant_http_server.py --port 9095` (localhost bind only).
-2. Configure local env (no URLs in Profile): `ABIS_RESTAURANT_HTTP_ADAPTER_ENABLED=true`, `ABIS_RESTAURANT_HTTP_ADAPTER_BASE_URL=http://127.0.0.1:9095`, `ABIS_RESTAURANT_HTTP_ADAPTER_PATH=/sandbox/v1/reservations`.
+2. Configure local env (no URLs in Profile): `ABIS_RESTAURANT_HTTP_ADAPTER_ENABLED=true`, `ABIS_RESTAURANT_HTTP_ADAPTER_TARGET_MODE=LOCALHOST_MOCK`, `ABIS_RESTAURANT_HTTP_ADAPTER_BASE_URL=http://127.0.0.1:9095`, `ABIS_RESTAURANT_HTTP_ADAPTER_PATH=/sandbox/v1/reservations`.
 3. Invoke with `"execution_class": "AUTHORIZED_NON_PRODUCTION"` and the same structured `input`.
 
-Remote Sandbox hostnames (for example `https://sandbox.company.example`) are **not** permitted by the v0.7.0 Reference egress policy.
+### Optional: `AUTHORIZED_NON_PRODUCTION` — remote Sandbox HTTPS (v0.8.0+)
+
+Trusted configuration only (illustrative — use your non-production Sandbox hostname and paths; **do not** commit secrets):
+
+| Variable | Purpose |
+| --- | --- |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_TARGET_MODE` | `REMOTE_AUTHORIZED` |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_AUTHORIZED_HOSTNAME` | Exact Sandbox hostname (no wildcards, no IP literals) |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_AUTHORIZED_PORT` | `443` unless a non-default TLS port is explicitly declared |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_PATH` | Exact allowlisted path (for example `/sandbox/v1/reservations`) |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_ENV` | `SANDBOX` / `MOCK` / `SIMULATOR` / `SYNTHETIC_DEV` only |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_CREDENTIAL_ENV` | **Required** — name of env var holding Bearer token |
+| `ABIS_RESTAURANT_HTTP_ADAPTER_TARGET_AUTHORIZATION_ID` | Stable integration authorization id (non-secret) |
+
+Invoke still uses Profile-advertised paths and structured `input` only — **not** a URL in the request body.
+
+**Observe** remains **unsupported** for external adapter executions (`AUTHORIZED_NON_PRODUCTION`).
 
 ---
 
