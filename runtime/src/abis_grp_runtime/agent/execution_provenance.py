@@ -50,3 +50,14 @@ def build_execution_provenance(
     if observation_kind:
         result["observation_kind"] = observation_kind
     return result
+
+
+def merge_connector_provenance(
+    base: dict[str, Any] | None,
+    connector_metadata: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge authorized adapter execution metadata into provenance (not Native Result)."""
+    merged = dict(base or {})
+    for key, value in connector_metadata.items():
+        merged[key] = value
+    return merged

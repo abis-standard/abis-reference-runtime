@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Mapping
 
 from abis_grp_runtime.agent.adapter import ExternalAgentAdapter
 from abis_grp_runtime.agent.envelope import AgentRequestEnvelope, AgentResponseEnvelope
-from abis_grp_runtime.agent.execution_provenance import build_execution_provenance
+from abis_grp_runtime.agent.execution_provenance import build_execution_provenance, merge_connector_provenance
+from abis_grp_runtime.connectors.authorized_http_sandbox import AuthorizedHttpSandboxConnector
+from abis_grp_runtime.execution import ExecutionClass
 from abis_grp_runtime.agent.serialization import request_from_dict
 from abis_grp_runtime.core import RuntimeCore
 from abis_grp_runtime.registry.interaction_registry import RuntimeInteractionRegistry
@@ -35,7 +38,11 @@ class GrokE2EService:
         operation = request.operation.strip().lower()
         adapter = self._registry.get_adapter(vertical, operation)
         registered = self._registry.find(vertical, operation)
-        connector = adapter.get_connector()
+        execution_class = ExecutionClass.parse(request.execution_class)
+        try:
+            connector = adapter.get_connector_for_execution_class(execution_class.value)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
         bound_operation = adapter.bind_operation(operation)
         runtime = RuntimeCore(connector=connector)
         adapter_client = ExternalAgentAdapter(runtime)
@@ -48,7 +55,16 @@ class GrokE2EService:
             descriptor_path=registered.descriptor_path if registered else None,
             implementation_continuity_reference=icr,
         )
-        return adapter_client.invoke(request, execution_provenance=provenance)
+        response = adapter_client.invoke(request, execution_provenance=provenance)
+        if isinstance(connector, AuthorizedHttpSandboxConnector):
+            response = replace(
+                response,
+                execution_provenance=merge_connector_provenance(
+                    response.execution_provenance,
+                    connector.consume_execution_metadata(),
+                ),
+            )
+        return response
 
     def invoke_from_dict(self, payload: Mapping[str, Any]) -> AgentResponseEnvelope:
         data = dict(payload)

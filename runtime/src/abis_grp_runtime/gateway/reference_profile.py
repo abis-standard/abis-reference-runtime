@@ -13,7 +13,7 @@ from abis_grp_runtime.gateway.execution_surface import (
 from abis_grp_runtime.registry.interaction_registry import require_active_registry
 
 PROFILE_KIND = "abis-reference-runtime-profile"
-PROFILE_VERSION = 4
+PROFILE_VERSION = 5
 RUNTIME_NAME = "abis-reference-runtime"
 REFERENCE_PROFILE_PATH = "/v1/reference-profile"
 HEALTH_PATH = "/health"

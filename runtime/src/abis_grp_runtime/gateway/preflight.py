@@ -5,15 +5,20 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from abis_grp_runtime.adapters.restaurant import RestaurantBusinessAdapter
+from abis_grp_runtime.execution import ExecutionClass
 from abis_grp_runtime.gateway.config import GatewayConfig
 from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION, find_advertised_interaction
 from abis_grp_runtime.gateway.reference_profile import PROFILE_VERSION
+from abis_grp_runtime.registry.interaction_registry import require_active_registry
 from abis_grp_runtime.version import __version__ as RUNTIME_VERSION
 
 PREFLIGHT_READY = "PREFLIGHT_READY"
 PREFLIGHT_NOT_ADVERTISED = "PREFLIGHT_NOT_ADVERTISED"
 PREFLIGHT_EXECUTION_DENIED = "PREFLIGHT_EXECUTION_DENIED"
 PREFLIGHT_INVALID_REQUEST = "PREFLIGHT_INVALID_REQUEST"
+PREFLIGHT_ADAPTER_NOT_CONFIGURED = "PREFLIGHT_ADAPTER_NOT_CONFIGURED"
+PREFLIGHT_ENVIRONMENT_PROHIBITED = "PREFLIGHT_ENVIRONMENT_PROHIBITED"
 
 ALLOWED_PREFLIGHT_KEYS = frozenset({"operation", "execution_class", "correlation_id"})
 
@@ -100,6 +105,26 @@ def _evidence_metadata(correlation_id: str | None = None) -> dict[str, Any]:
     return evidence
 
 
+def _evaluate_authorized_adapter_preflight(vertical: str, operation: str) -> str | None:
+    """Return a non-ready preflight state, or None when adapter checks pass."""
+    try:
+        adapter = require_active_registry().get_adapter(vertical, operation)
+    except KeyError:
+        return PREFLIGHT_NOT_ADVERTISED
+    if not isinstance(adapter, RestaurantBusinessAdapter):
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    cfg = adapter.http_adapter_config
+    if not adapter.http_adapter_configured() or cfg is None:
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    if not cfg.structurally_valid():
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    if not cfg.environment_classification.potentially_allowed():
+        return PREFLIGHT_ENVIRONMENT_PROHIBITED
+    if not cfg.credential_available():
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    return None
+
+
 def evaluate_preflight(
     config: GatewayConfig,
     *,
@@ -133,6 +158,18 @@ def evaluate_preflight(
             "disclaimer": dict(PREFLIGHT_DISCLAIMER),
             "evidence": evidence,
         }
+
+    if execution_class == ExecutionClass.AUTHORIZED_NON_PRODUCTION.value:
+        adapter_state = _evaluate_authorized_adapter_preflight(vertical_norm, operation)
+        if adapter_state is not None:
+            return {
+                "preflight_state": adapter_state,
+                "vertical": vertical_norm,
+                "operation": operation,
+                "execution_class": execution_class,
+                "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+                "evidence": evidence,
+            }
 
     return {
         "preflight_state": PREFLIGHT_READY,

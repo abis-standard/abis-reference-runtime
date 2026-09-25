@@ -88,7 +88,10 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
         item = next(i for i in interactions if i["vertical"] == "restaurant")
         self.assertEqual(item["operation"], "reserve")
         self.assertIn("descriptor_path", item)
-        self.assertEqual(item["execution_classes_allowed"], ["CONTROLLED_SIMULATOR"])
+        self.assertEqual(
+            item["execution_classes_allowed"],
+            ["AUTHORIZED_NON_PRODUCTION", "CONTROLLED_SIMULATOR"],
+        )
         self.assertEqual(item["invocation"]["method"], "POST")
         self.assertEqual(item["invocation"]["path"], "/v1/demo/restaurant/invoke")
         self.assertEqual(
@@ -151,7 +154,10 @@ class TestHealthCompatibility(ReferenceProfileTestCase):
         self.assertTrue(body["ok"])
         self.assertEqual(body["verticals_enabled"], ["restaurant", "shopping"])
         self.assertEqual(sorted(body["operations_allowed"]), ["reserve", "submit_order"])
-        self.assertEqual(body["execution_class_allowed"], ["CONTROLLED_SIMULATOR"])
+        self.assertEqual(
+            body["execution_class_allowed"],
+            ["AUTHORIZED_NON_PRODUCTION", "CONTROLLED_SIMULATOR"],
+        )
         self.assertEqual(body["real_execution"], "PROHIBITED")
         self.assertEqual(body["semantic_authority"], "NONE")
         self.assertEqual(body["reference_runtime"], f"v{__version__}")

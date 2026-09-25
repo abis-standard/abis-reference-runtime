@@ -26,7 +26,9 @@ body:
         Distinguish **ACTUALLY_EXECUTED** vs **NOT_EXECUTED** vs **REPOSITORY_DESCRIBED**.  
         Native Result ≠ Business Outcome. **REAL_EXECUTION PROHIBITED** — Sandbox / Mock / synthetic dev only.
 
-        v0.6.0 integration path: **mapping + Controlled Simulator** — the Runtime does not invoke your external Sandbox/Mock over HTTP unless a later Runtime version explicitly advertises that capability.
+        Default integration path: **mapping + Controlled Simulator** (no HTTP to your external Sandbox/Mock).
+
+        v0.7.0 `AUTHORIZED_NON_PRODUCTION`: **localhost Mock HTTP only** when locally configured — remote company-hosted Sandbox endpoints remain prohibited. Do not paste private endpoint URLs.
 
   - type: input
     id: reporter
@@ -65,7 +67,78 @@ body:
     attributes:
       label: Reference Runtime Version
       description: From Profile `runtime.version` when executed, or documented target.
-      placeholder: v0.6.0
+      placeholder: v0.7.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: execution_class_used
+    attributes:
+      label: Execution Class Used
+      options:
+        - CONTROLLED_SIMULATOR
+        - AUTHORIZED_NON_PRODUCTION
+        - other / not executed
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adapter_configured
+    attributes:
+      label: Authorized Adapter Configured (local)
+      description: For AUTHORIZED_NON_PRODUCTION only. Do not paste private URLs.
+      options:
+        - "N/A — CONTROLLED_SIMULATOR"
+        - "YES"
+        - "NO"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment_classification
+    attributes:
+      label: Environment Classification (if external adapter)
+      options:
+        - N/A
+        - SANDBOX
+        - MOCK
+        - SIMULATOR
+        - SYNTHETIC_DEV
+        - UNKNOWN / not reported
+    validations:
+      required: true
+
+  - type: dropdown
+    id: egress_decision
+    attributes:
+      label: Egress Decision Observed (from execution_provenance)
+      options:
+        - N/A
+        - ALLOW
+        - DENY
+        - NOT_OBSERVED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: external_request_attempted
+    attributes:
+      label: External HTTP Request Attempted
+      options:
+        - "NO"
+        - "YES"
+        - NOT_OBSERVED
+    validations:
+      required: true
+
+  - type: dropdown
+    id: external_response_received
+    attributes:
+      label: External HTTP Response Received
+      options:
+        - "NO"
+        - "YES"
+        - NOT_OBSERVED
     validations:
       required: true
 

@@ -12,6 +12,7 @@ class ExecutionClass(str, Enum):
     NULL = "NULL"
     FIXTURE = "FIXTURE"
     CONTROLLED_SIMULATOR = "CONTROLLED_SIMULATOR"
+    AUTHORIZED_NON_PRODUCTION = "AUTHORIZED_NON_PRODUCTION"
     REAL_EXTERNAL = "REAL_EXTERNAL"
     UNKNOWN = "UNKNOWN"
 
@@ -46,11 +47,12 @@ class ExecutionDisposition:
 
 
 def resolve_execution_disposition(execution_class: ExecutionClass) -> ExecutionDisposition:
-    """M-201 baseline: NULL/FIXTURE/CONTROLLED_SIMULATOR allowed; REAL_EXTERNAL/UNKNOWN denied."""
+    """M-201 baseline: mock-only + authorized non-production egress; REAL_EXTERNAL/UNKNOWN denied."""
     allowed = {
         ExecutionClass.NULL,
         ExecutionClass.FIXTURE,
         ExecutionClass.CONTROLLED_SIMULATOR,
+        ExecutionClass.AUTHORIZED_NON_PRODUCTION,
     }
     if execution_class in allowed:
         return ExecutionDisposition(
