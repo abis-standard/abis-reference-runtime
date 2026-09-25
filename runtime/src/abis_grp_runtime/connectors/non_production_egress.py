@@ -130,6 +130,15 @@ def _ip_allowed_localhost_mock(ip: ipaddress.IPv4Address | ipaddress.IPv6Address
     return bool(ip.is_loopback)
 
 
+def _ip_allowed_for_target_mode(
+    mode: TargetMode,
+    ip: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> bool:
+    if mode is TargetMode.LOCALHOST_MOCK:
+        return _ip_allowed_localhost_mock(ip)
+    return _ip_allowed_remote_public(ip)
+
+
 def _ip_allowed_remote_public(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     ip = _normalize_ip(ip)
     if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_multicast:
@@ -298,29 +307,28 @@ class NonProductionEgressPolicy:
             return None, EgressVerdict(EgressDecision.DENY, self._allowlist_id, str(exc))
 
         normalized_ips: list[str] = []
-        allowed_selected: list[str] = []
         for ip_text in resolved:
             try:
                 ip_obj = ipaddress.ip_address(ip_text)
             except ValueError:
                 return None, EgressVerdict(EgressDecision.DENY, self._allowlist_id, "invalid resolved address")
             ip_obj = _normalize_ip(ip_obj)
+            if not _ip_allowed_for_target_mode(self._target_mode, ip_obj):
+                return None, EgressVerdict(
+                    EgressDecision.DENY,
+                    self._allowlist_id,
+                    "prohibited resolved address in DNS answer",
+                )
             normalized_ips.append(str(ip_obj))
-            if self._target_mode is TargetMode.LOCALHOST_MOCK:
-                if _ip_allowed_localhost_mock(ip_obj):
-                    allowed_selected.append(str(ip_obj))
-            else:
-                if _ip_allowed_remote_public(ip_obj):
-                    allowed_selected.append(str(ip_obj))
 
-        if not allowed_selected:
+        if not normalized_ips:
             return None, EgressVerdict(
                 EgressDecision.DENY,
                 self._allowlist_id,
                 "no policy-permitted resolved addresses",
             )
 
-        selected = sorted(allowed_selected)[0]
+        selected = sorted(set(normalized_ips))[0]
         destination = ValidatedDestination(
             target_mode=self._target_mode,
             authorized_hostname=host,

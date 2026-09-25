@@ -16,6 +16,18 @@ def default_ssl_context() -> ssl.SSLContext:
     return ctx
 
 
+class InsecureTlsContextError(OSError):
+    """TLS context does not meet required verification invariants."""
+
+
+def require_secure_tls_context(ctx: ssl.SSLContext) -> None:
+    """Fail closed before connect when injected context disables verification."""
+    if not ctx.check_hostname:
+        raise InsecureTlsContextError("tls context rejected")
+    if ctx.verify_mode != ssl.CERT_REQUIRED:
+        raise InsecureTlsContextError("tls context rejected")
+
+
 def connect_tls(
     destination: ValidatedDestination,
     *,
@@ -24,6 +36,7 @@ def connect_tls(
 ) -> ssl.SSLSocket:
     """TCP connect to selected_ip only; TLS with SNI + hostname verification."""
     ctx = ssl_context or default_ssl_context()
+    require_secure_tls_context(ctx)
     raw = socket.create_connection(
         (destination.selected_ip, destination.authorized_port),
         timeout=timeout,
