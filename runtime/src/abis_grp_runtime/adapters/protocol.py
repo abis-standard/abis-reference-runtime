@@ -30,6 +30,16 @@ class BusinessInteractionAdapter(ABC):
     def get_connector(self) -> BusinessConnectorPort:
         ...
 
+    def get_connector_for_execution_class(self, execution_class: str) -> BusinessConnectorPort:
+        """Return connector for the requested execution class (fail closed by default)."""
+        normalized = str(execution_class or "").strip().upper()
+        if normalized == "CONTROLLED_SIMULATOR":
+            return self.get_connector()
+        raise ValueError(f"execution_class {execution_class} not supported by adapter {self.adapter_id}")
+
+    def supports_execution_class(self, execution_class: str) -> bool:
+        return str(execution_class or "").strip().upper() in self.default_execution_classes
+
     def bind_operation(self, operation: str) -> str:
         """Map advertised operation to connector execute() operation string."""
         return operation.strip().lower()

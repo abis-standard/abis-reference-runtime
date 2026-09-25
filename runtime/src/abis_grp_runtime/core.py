@@ -51,7 +51,10 @@ class RuntimeCore:
     def _select_connector(self, execution_class: ExecutionClass) -> BusinessConnectorPort:
         if execution_class is ExecutionClass.FIXTURE:
             return FixtureConnector()
-        if execution_class is ExecutionClass.CONTROLLED_SIMULATOR:
+        if execution_class in (
+            ExecutionClass.CONTROLLED_SIMULATOR,
+            ExecutionClass.AUTHORIZED_NON_PRODUCTION,
+        ):
             return self._connector
         return NullConnector()
 

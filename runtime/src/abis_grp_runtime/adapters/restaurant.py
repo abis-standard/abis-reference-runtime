@@ -13,7 +13,13 @@ from abis_grp_runtime.adapters._validation import (
 from abis_grp_runtime.adapters.errors import AdapterValidationError
 from abis_grp_runtime.adapters.protocol import BusinessInteractionAdapter
 from abis_grp_runtime.connector import BusinessConnectorPort
+from abis_grp_runtime.adapters.http_adapter_config import (
+    RestaurantHttpAdapterConfig,
+    load_restaurant_http_adapter_config_from_env,
+)
+from abis_grp_runtime.connectors.authorized_http_sandbox import AuthorizedHttpSandboxConnector
 from abis_grp_runtime.connectors.restaurant_simulator import RestaurantSimulatorConnector
+from abis_grp_runtime.execution import ExecutionClass
 from abis_grp_runtime.descriptor.builder import build_descriptor
 
 RESTAURANT_ALLOWED_INPUT = frozenset(
@@ -49,11 +55,29 @@ class RestaurantBusinessAdapter(BusinessInteractionAdapter):
     adapter_id = "restaurant"
     vertical = "restaurant"
     supported_operations = frozenset({"reserve"})
-    default_execution_classes = frozenset({"CONTROLLED_SIMULATOR"})
+    default_execution_classes = frozenset({"CONTROLLED_SIMULATOR", "AUTHORIZED_NON_PRODUCTION"})
     business_system_identifier = "abis-demo-restaurant-simulator"
 
-    def __init__(self, crs_engine: Any) -> None:
-        self._connector = RestaurantSimulatorConnector(crs_engine)
+    def __init__(
+        self,
+        crs_engine: Any,
+        *,
+        http_adapter_config: RestaurantHttpAdapterConfig | None = None,
+    ) -> None:
+        self._simulator_connector = RestaurantSimulatorConnector(crs_engine)
+        self._http_config = http_adapter_config
+        if self._http_config is None:
+            self._http_config = load_restaurant_http_adapter_config_from_env()
+        self._http_connector: AuthorizedHttpSandboxConnector | None = None
+        if self._http_config and self._http_config.structurally_valid():
+            self._http_connector = AuthorizedHttpSandboxConnector(self._http_config)
+
+    @property
+    def http_adapter_config(self) -> RestaurantHttpAdapterConfig | None:
+        return self._http_config
+
+    def http_adapter_configured(self) -> bool:
+        return self._http_connector is not None
 
     def validate_structured_input(self, operation: str, structured_input: Mapping[str, Any]) -> None:
         if operation.strip().lower() != "reserve":
@@ -82,4 +106,14 @@ class RestaurantBusinessAdapter(BusinessInteractionAdapter):
         )
 
     def get_connector(self) -> BusinessConnectorPort:
-        return self._connector
+        return self._simulator_connector
+
+    def get_connector_for_execution_class(self, execution_class: str) -> BusinessConnectorPort:
+        normalized = str(execution_class or "").strip().upper()
+        if normalized == ExecutionClass.CONTROLLED_SIMULATOR.value:
+            return self._simulator_connector
+        if normalized == ExecutionClass.AUTHORIZED_NON_PRODUCTION.value:
+            if self._http_connector is None:
+                raise ValueError("AUTHORIZED_NON_PRODUCTION adapter not configured")
+            return self._http_connector
+        raise ValueError(f"execution_class {execution_class} not supported by restaurant adapter")

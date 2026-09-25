@@ -1,10 +1,10 @@
 {
   "profile_kind": "abis-reference-runtime-profile",
-  "profile_version": 4,
-  "execution_surface_revision": "reference-execution-surface-4",
+  "profile_version": 5,
+  "execution_surface_revision": "reference-execution-surface-5",
   "runtime": {
     "name": "abis-reference-runtime",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "authority": {
     "semantic": "NONE",
@@ -14,7 +14,7 @@
     {
       "vertical": "restaurant",
       "operation": "reserve",
-      "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
+      "execution_classes_allowed": ["AUTHORIZED_NON_PRODUCTION", "CONTROLLED_SIMULATOR"],
       "invocation": {
         "method": "POST",
         "path": "/v1/demo/restaurant/invoke"

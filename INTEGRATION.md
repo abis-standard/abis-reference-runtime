@@ -1,7 +1,7 @@
 # Try an ABIS Integration
 
 **Repository:** [abis-standard/abis-reference-runtime](https://github.com/abis-standard/abis-reference-runtime)  
-**Reference Runtime:** v0.6.0 (confirm via `GET /v1/reference-profile` → `runtime.version`)  
+**Reference Runtime:** v0.7.0 (confirm via `GET /v1/reference-profile` → `runtime.version`)  
 **Type:** External adoption / integration evidence — **not** certification, conformance determination, or Business Outcome evaluation
 
 ---
@@ -10,6 +10,8 @@
 
 **Map** one Sandbox / Mock interaction to the current ABIS Reference Runtime contract and produce **integration evidence**.
 
+### Mapping + Controlled Simulator (default integration path)
+
 ```text
 External Sandbox / Mock contract (your environment)
   → mapping documentation
@@ -17,15 +19,27 @@ External Sandbox / Mock contract (your environment)
   → integration evidence
 ```
 
-The **current v0.6.0** Reference Runtime does **not** invoke your external Sandbox or Mock. Runtime execution on this path remains on the **Controlled Simulator** (`CONTROLLED_SIMULATOR`).
+This path **does not** invoke your external Sandbox or Mock over HTTP. Runtime execution uses `CONTROLLED_SIMULATOR` (in-process controlled simulators).
 
-Direct non-production external adapter execution (Reference Runtime → HTTP → authorized Mock) is a **subsequent Runtime capability** — **not** available in v0.6.0. Do not document or report it as available until your target Runtime version advertises it.
+On **v0.6.0**, this is the only Runtime execution mode for integration evidence. On **v0.7.0**, it remains the default and does not require external adapter configuration.
+
+### Optional: authorized localhost Mock HTTP (v0.7.0 · `restaurant` / `reserve` only)
+
+When the Reference Runtime advertises `AUTHORIZED_NON_PRODUCTION` and local adapter configuration is enabled, `restaurant` / `reserve` may cross a real **localhost Mock HTTP** boundary.
+
+| Term | Meaning |
+| --- | --- |
+| `CONTROLLED_SIMULATOR` | In-process controlled simulator |
+| `AUTHORIZED_NON_PRODUCTION` | Authorized **localhost Mock HTTP** boundary in the v0.7.0 Reference implementation |
+| `REAL_EXTERNAL` | **DENY** (unchanged) |
+
+The v0.7.0 reference external adapter permits **explicitly configured localhost Mock HTTP endpoints only**. Remote company-hosted Sandbox endpoints remain **prohibited**. Do not describe `AUTHORIZED_NON_PRODUCTION` as general remote Sandbox support in v0.7.0.
 
 ---
 
 Have a **Sandbox**, **Mock**, or **simulator** API in your own non-production environment?
 
-Document how **one** ABIS Business Interaction maps to the Runtime contract, run **Controlled Simulator** Preflight / Invoke, and return **sanitized** evidence.
+Document how **one** ABIS Business Interaction maps to the Runtime contract, run Preflight / Invoke, and return **sanitized** evidence.
 
 You do **not** need to integrate your production system.  
 You do **not** need to implement every ABIS interaction.  
@@ -34,7 +48,7 @@ You do **not** need to implement every ABIS interaction.
 | Boundary | Statement |
 | --- | --- |
 | **NO PRODUCTION ACCESS REQUIRED** | Sandbox / Mock / synthetic dev only |
-| **NO REAL BOOKING OR PURCHASE** | Controlled simulators only |
+| **NO REAL BOOKING OR PURCHASE** | Simulators or authorized Mock HTTP only |
 | **NO PAYMENT** | Commerce path is synthetic |
 | **NO CERTIFICATION OR CONFORMANCE CLAIM** | Integration reports are participant evidence |
 
@@ -44,7 +58,7 @@ This path is **separate** from [Quick Validation](QUICK-VALIDATION.md). Quick Va
 
 ---
 
-## Published starting points (v0.6.0)
+## Published starting points (v0.7.0)
 
 | Vertical | Operation | Example walkthrough |
 | --- | --- | --- |
@@ -63,10 +77,10 @@ Choose → Map → Preflight → Invoke → Report
 
 | Step | What you do |
 | --- | --- |
-| **1. Choose** | Pick one interaction (`restaurant/reserve` or `shopping/submit_order`) and `CONTROLLED_SIMULATOR`. |
+| **1. Choose** | Pick one interaction and execution class: `CONTROLLED_SIMULATOR` (default), or `AUTHORIZED_NON_PRODUCTION` for configured localhost Mock HTTP on `restaurant` / `reserve` only (v0.7.0+). |
 | **2. Map** | Document how your Sandbox/Mock operation fields map to the Runtime Invoke `input` (synthetic data only). |
 | **3. Preflight** | `POST /v1/demo/{vertical}/preflight` — confirms the interaction is **advertised**; not business acceptance. |
-| **4. Invoke** | `POST` profile-advertised invoke path with Bearer token (local demo token only — **never** paste production secrets into evidence). |
+| **4. Invoke** | `POST` profile-advertised invoke path with Bearer token and chosen `execution_class` (`CONTROLLED_SIMULATOR` or, for restaurant only when locally configured, `AUTHORIZED_NON_PRODUCTION`). |
 | **5. Report** | Open an [Integration Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=integration-report.yml) with sanitized request/response excerpts. |
 
 **After Invoke (restaurant only):** optional **Observe** — see below.
@@ -76,7 +90,7 @@ Choose → Map → Preflight → Invoke → Report
 | Layer | Role |
 | --- | --- |
 | **Preflight** | Advertisement / readiness check for the requested interaction |
-| **Invoke** | Executes against the reference **Controlled Simulator** connector |
+| **Invoke** | Executes via **Controlled Simulator** or **authorized non-production HTTP adapter** (restaurant only when configured) |
 | **Native Result** | Technical/native observation (`external_status`, `external_identifier`, `payload`) |
 | **Business Outcome** | **Not evaluated** by this Runtime — expect `outcome_disposition.disposition`: `NOT_EVALUATED` on Invoke when present |
 | **Observe** | Technical/native snapshot lookup — **not** Business Outcome Evaluation, **not** Completion Determination |
@@ -90,10 +104,11 @@ A Native Result such as `external_status: CONFIRMED` is **not** a Business Outco
 
 ## Observe (restaurant / reserve only)
 
-v0.6.0 exposes `POST /v1/demo/restaurant/observe` for native lookup by `external_identifier` (see Profile `technical_observation.restaurant`).
+v0.7.0 exposes `POST /v1/demo/restaurant/observe` for native lookup by `external_identifier` (see Profile `technical_observation.restaurant`).
 
-- Supported for **`restaurant` / `reserve`** follow-up in the Developer Preview.
-- **Not** advertised for `shopping` / `submit_order` in v0.6.0 — do **not** fabricate Observe evidence for shopping.
+- Supported for **`restaurant` / `reserve`** with **`CONTROLLED_SIMULATOR`** follow-up only.
+- **Not** supported for `AUTHORIZED_NON_PRODUCTION` external adapter executions.
+- **Not** advertised for `shopping` / `submit_order` — do **not** fabricate Observe evidence for shopping.
 
 Observe performs **technical/native observation only**. It does **not** evaluate Business Outcome or perform Completion Determination.
 

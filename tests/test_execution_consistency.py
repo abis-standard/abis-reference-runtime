@@ -179,11 +179,15 @@ class ExecutionConsistencyTestCase(unittest.TestCase):
 
     def test_every_advertised_interaction_is_preflight_ready_and_invokable(self) -> None:
         for item in reference_execution_surface():
+            if "CONTROLLED_SIMULATOR" in item.execution_classes_allowed:
+                execution_class = "CONTROLLED_SIMULATOR"
+            else:
+                execution_class = sorted(item.execution_classes_allowed)[0]
             preflight = evaluate_preflight(
                 self.config,
                 vertical=item.vertical,
                 operation=item.operation,
-                execution_class=sorted(item.execution_classes_allowed)[0],
+                execution_class=execution_class,
             )
             self.assertEqual(preflight["preflight_state"], PREFLIGHT_READY)
             status, body = self._post_invoke(
@@ -191,7 +195,7 @@ class ExecutionConsistencyTestCase(unittest.TestCase):
                 _invoke_payload(
                     vertical=item.vertical,
                     operation=item.operation,
-                    execution_class=sorted(item.execution_classes_allowed)[0],
+                    execution_class=execution_class,
                     correlation_id=f"surface-{item.vertical}-{item.operation}",
                 ),
             )

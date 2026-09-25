@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.7.0 — Developer Preview (authorized non-production external adapter)
+
+### Added
+
+- `AUTHORIZED_NON_PRODUCTION` execution class (Reference Runtime implementation metadata — not normative ABIS)
+- `NonProductionEgressPolicy` fail-closed egress controls for authorized HTTP adapters
+- `AuthorizedHttpSandboxConnector` for `restaurant` / `reserve` against a localhost Mock HTTP server
+- `scripts/mock_restaurant_http_server.py` — synthetic reservation endpoint (no real booking)
+- Local adapter configuration via environment variables (`ABIS_RESTAURANT_HTTP_ADAPTER_*`)
+- Extended `execution_provenance` for connector kind, environment classification, egress decision, external request/response facts
+- Preflight states: `PREFLIGHT_ADAPTER_NOT_CONFIGURED`, `PREFLIGHT_ENVIRONMENT_PROHIBITED`
+
+### Changed
+
+- Profile v5 (`profile_version=5`)
+- `execution_surface_revision`: `reference-execution-surface-4` → `reference-execution-surface-5`
+- `restaurant` / `reserve` advertises `CONTROLLED_SIMULATOR` and `AUTHORIZED_NON_PRODUCTION`
+- `shopping` / `submit_order` remains `CONTROLLED_SIMULATOR` only
+
+### Unchanged boundaries
+
+- `REAL_EXECUTION = PROHIBITED`, `REAL_EXTERNAL` denied
+- Native Result ≠ Business Outcome (`NOT_EVALUATED`)
+- Restaurant `observe` remains Controlled Simulator technical observation only (no external HTTP Observe)
+- Descriptor version unchanged
+
 ## v0.6.0 — Developer Preview (implementation continuity & technical observation)
 
 ### Added

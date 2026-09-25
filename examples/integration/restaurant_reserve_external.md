@@ -3,7 +3,9 @@
 **Synthetic data only.** No real restaurant reservation occurs.  
 **Native Result ≠ Business Outcome.** `external_status: CONFIRMED` is not a Business Outcome determination.
 
-**D-11A scope:** This walkthrough is **mapping documentation + Controlled Simulator Invoke** evidence. The v0.6.0 Reference Runtime does **not** call your external Sandbox or Mock over HTTP.
+**Default (all versions):** **mapping documentation + `CONTROLLED_SIMULATOR` Invoke** — the Runtime does **not** call your external Sandbox or Mock over HTTP.
+
+**Optional v0.7.0:** `AUTHORIZED_NON_PRODUCTION` may use a **localhost Mock HTTP** server only (`scripts/mock_restaurant_http_server.py`). Remote company-hosted Sandbox URLs remain **prohibited** in the v0.7.0 Reference implementation.
 
 ---
 
@@ -87,7 +89,7 @@ Example response shape: `examples/restaurant_reserve_preflight_response.json` (*
 
 ---
 
-## 4. Invoke
+## 4. Invoke (`CONTROLLED_SIMULATOR`)
 
 Set a **local** demo token (not production credentials):
 
@@ -114,9 +116,17 @@ Record from **your** session when executed:
 - `execution_provenance`, `trace_reference`
 - `outcome_disposition.disposition` → expect **`NOT_EVALUATED`** (Business Outcome evaluation is outside Runtime scope)
 
+### Optional: `AUTHORIZED_NON_PRODUCTION` (v0.7.0 · localhost Mock HTTP only)
+
+1. Start `python3 scripts/mock_restaurant_http_server.py --port 9095` (localhost bind only).
+2. Configure local env (no URLs in Profile): `ABIS_RESTAURANT_HTTP_ADAPTER_ENABLED=true`, `ABIS_RESTAURANT_HTTP_ADAPTER_BASE_URL=http://127.0.0.1:9095`, `ABIS_RESTAURANT_HTTP_ADAPTER_PATH=/sandbox/v1/reservations`.
+3. Invoke with `"execution_class": "AUTHORIZED_NON_PRODUCTION"` and the same structured `input`.
+
+Remote Sandbox hostnames (for example `https://sandbox.company.example`) are **not** permitted by the v0.7.0 Reference egress policy.
+
 ---
 
-## 5. Observe (optional, restaurant only)
+## 5. Observe (optional, `CONTROLLED_SIMULATOR` only)
 
 After Invoke returns an `external_identifier`, native technical observation:
 
