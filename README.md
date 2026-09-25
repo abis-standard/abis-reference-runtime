@@ -6,6 +6,22 @@ Reference implementation for executing ABIS Business Interactions against contro
 
 ---
 
+## Start here
+
+| Intent | Where to go |
+| --- | --- |
+| Understand the Runtime | This README (architecture, Quick Start, boundaries) |
+| Try ABIS with an AI (no code) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
+| Run the Reference Runtime | [Quick Start](#quick-start) below |
+| Validate the Runtime | [VALIDATION.md](VALIDATION.md) |
+| Connect a Sandbox / Mock | [INTEGRATION.md](INTEGRATION.md) |
+| Report validation evidence | [Validation Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
+| Report integration evidence | [Integration Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=integration-report.yml) |
+
+Quick Validation remains the fastest public path when you do not need an external Sandbox or Mock.
+
+---
+
 ## Current validation target
 
 Unless you are intentionally validating a **historical release**, validate the current public validation surface from the repository's **default branch** and confirm the Runtime version from the Reference Runtime Profile before execution.
@@ -215,6 +231,7 @@ Inspect → Test → Record Evidence → Open Issue → Improve ABIS
 | --- | --- |
 | **Try ABIS** — Quick Validation (no coding required) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
 | **Run ABIS** — full validation guide | [VALIDATION.md](VALIDATION.md) |
+| **Integrate** — Sandbox / Mock → Runtime evidence | [INTEGRATION.md](INTEGRATION.md) |
 
 Quick Validation can produce useful evidence even when your environment cannot execute the Reference Runtime.
 
