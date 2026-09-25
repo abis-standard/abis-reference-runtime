@@ -6,9 +6,26 @@
 
 ---
 
+## What this entry does
+
+**Map** one Sandbox / Mock interaction to the current ABIS Reference Runtime contract and produce **integration evidence**.
+
+```text
+External Sandbox / Mock contract (your environment)
+  → mapping documentation
+  → Controlled Simulator execution (Reference Runtime)
+  → integration evidence
+```
+
+The **current v0.6.0** Reference Runtime does **not** invoke your external Sandbox or Mock. Runtime execution on this path remains on the **Controlled Simulator** (`CONTROLLED_SIMULATOR`).
+
+Direct non-production external adapter execution (Reference Runtime → HTTP → authorized Mock) is a **subsequent Runtime capability** — **not** available in v0.6.0. Do not document or report it as available until your target Runtime version advertises it.
+
+---
+
 Have a **Sandbox**, **Mock**, or **simulator** API in your own non-production environment?
 
-Connect **one** ABIS Business Interaction to the ABIS Reference Runtime, execute against the **Controlled Simulator** surface, and return **sanitized** evidence.
+Document how **one** ABIS Business Interaction maps to the Runtime contract, run **Controlled Simulator** Preflight / Invoke, and return **sanitized** evidence.
 
 You do **not** need to integrate your production system.  
 You do **not** need to implement every ABIS interaction.  

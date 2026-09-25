@@ -3,6 +3,8 @@
 **Synthetic data only.** No real restaurant reservation occurs.  
 **Native Result ≠ Business Outcome.** `external_status: CONFIRMED` is not a Business Outcome determination.
 
+**D-11A scope:** This walkthrough is **mapping documentation + Controlled Simulator Invoke** evidence. The v0.6.0 Reference Runtime does **not** call your external Sandbox or Mock over HTTP.
+
 ---
 
 ## 1. External Sandbox / Mock (your environment)

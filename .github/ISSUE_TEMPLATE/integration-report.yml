@@ -26,6 +26,8 @@ body:
         Distinguish **ACTUALLY_EXECUTED** vs **NOT_EXECUTED** vs **REPOSITORY_DESCRIBED**.  
         Native Result ≠ Business Outcome. **REAL_EXECUTION PROHIBITED** — Sandbox / Mock / synthetic dev only.
 
+        v0.6.0 integration path: **mapping + Controlled Simulator** — the Runtime does not invoke your external Sandbox/Mock over HTTP unless a later Runtime version explicitly advertises that capability.
+
   - type: input
     id: reporter
     attributes:
