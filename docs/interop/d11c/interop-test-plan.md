@@ -24,7 +24,7 @@ Use placeholders; replace dates/times with partner-agreed test values.
 }
 ```
 
-Partner-specific mapping translates these fields into the Sandbox request body (documented in partner overlay).
+Partner-specific mapping translates these fields into the Sandbox request body (documented in private [partner-overlay-template.md](partner-overlay-template.md)).
 
 ---
 
