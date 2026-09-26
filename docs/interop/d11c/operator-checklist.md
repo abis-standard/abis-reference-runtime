@@ -8,7 +8,8 @@ Runbook for ABIS / test operator. D-11C is **interop**, not penetration testing.
 
 - [ ] Read [partner-requirements.md](partner-requirements.md) — partner eligible
 - [ ] Collect completed [partner-declaration-template.md](partner-declaration-template.md) → `partner-declaration.md`
-- [ ] Prepare partner overlay (see [evidence-template.md](evidence-template.md))
+- [ ] Triage partner response → [response-triage.md](response-triage.md) (`ELIGIBLE` before overlay)
+- [ ] Prepare private partner overlay → [partner-overlay-template.md](partner-overlay-template.md)
 - [ ] Confirm Runtime on known commit SHA (record in evidence)
 - [ ] Configure `REMOTE_AUTHORIZED` adapter env (hostname, port, path, classification, credential env var name)
 - [ ] Store credentials only in secure env — never in git

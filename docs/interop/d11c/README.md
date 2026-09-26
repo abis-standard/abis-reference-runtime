@@ -35,5 +35,9 @@ Controlled **technical interoperability** between the ABIS Reference Runtime and
 | [evidence-template.md](evidence-template.md) | Evidence report, axes, PASS A–J, package layout |
 | [sanitization-checklist.md](sanitization-checklist.md) | Mandatory redaction before publication |
 | [operator-checklist.md](operator-checklist.md) | Operator runbook |
+| [partner-overlay-template.md](partner-overlay-template.md) | Per-run operator overlay (private storage; not normative) |
+| [response-triage.md](response-triage.md) | Partner reply triage before overlay preparation |
 
-Evidence from a live test is stored under `D11C-EVIDENCE/` per [evidence-template.md](evidence-template.md) — **do not commit secrets or unsanitized partner credentials.**
+**Status note:** No controlled external interoperability test has been executed yet. No partner is approved in repository artifacts.
+
+Evidence from a live test is stored under `D11C-EVIDENCE/` per [evidence-template.md](evidence-template.md) — **do not commit secrets, partner-filled overlays, or unsanitized partner credentials.**

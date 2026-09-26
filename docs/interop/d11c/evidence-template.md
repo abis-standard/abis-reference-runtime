@@ -143,21 +143,11 @@ Not part of ABIS normative specification. No Runtime Core change required.
 
 ## Partner-specific overlay (operational)
 
-Maintain alongside declaration (no credentials):
+Use [partner-overlay-template.md](partner-overlay-template.md) for per-run preparation.  
+After partner outreach, classify the reply with [response-triage.md](response-triage.md) before filling the overlay.
 
-| Field | Notes |
-| --- | --- |
-| partner id | Slug for `PARTNER_ID` |
-| mapping version | Convention above |
-| target_authorization_id | Matches Runtime config |
-| environment classification | |
-| hostname treatment | Per publication level |
-| authorized port | |
-| authorized path | |
-| authentication type | e.g. Bearer via env var name only |
-| request mapping | Field-level ABIS → partner |
-| response mapping | Partner → NativeResultEnvelope |
-| safe negative-control condition | Phase G |
+Store completed overlays in private `D11C-EVIDENCE/` only — not in the public git tree.  
+Field names align with `PARTNER_ID`, `MAPPING_VERSION`, `TARGET_AUTHORIZATION_ID`, and `ENVIRONMENT_CLASSIFICATION` in this document.
 
 ---
 
