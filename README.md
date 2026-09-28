@@ -1,24 +1,67 @@
 # ABIS Reference Runtime
 
-**Developer Preview — v0.6.0**
+**Developer Preview — v0.8.0**
 
-Reference implementation for executing ABIS Business Interactions against controlled reference business systems.
+Executable reference implementation for ABIS Business Interactions. **Start with one interaction** — you do not need production access, real booking, purchase, or payment to explore the developer path.
+
+Sandbox, Mock, simulator, and **authorized non-production** test environments are in scope where the Runtime advertises them. This repository does **not** certify conformance, determine Business Outcome, or imply production readiness.
+
+```text
+AI Agent (optional)
+  ↓
+ABIS Business Interaction
+  ↓
+Reference Runtime
+  ↓
+Controlled simulator / authorized non-production Sandbox (where configured)
+  ↓
+Native Result
+  ↓
+Business Outcome disposition: NOT_EVALUATED
+```
+
+Native Result ≠ Business Outcome. A native `CONFIRMED` or `SUCCESS` observation is not proof that the user's intended outcome occurred.
 
 ---
 
 ## Start here
 
-| Intent | Where to go |
+| I want to… | Go to |
 | --- | --- |
-| Understand the Runtime | This README (architecture, Quick Start, boundaries) |
-| Try ABIS with an AI (no code) | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
-| Run the Reference Runtime | [Quick Start](#quick-start) below |
-| Validate the Runtime | [VALIDATION.md](VALIDATION.md) |
-| Connect a Sandbox / Mock | [INTEGRATION.md](INTEGRATION.md) |
+| Try ABIS without code | [QUICK-VALIDATION.md](QUICK-VALIDATION.md) |
+| Run the Reference Runtime locally | [Quick Start](#quick-start) · [VALIDATION.md](VALIDATION.md) |
+| Connect my Sandbox / Mock | [INTEGRATION.md](INTEGRATION.md) |
+| Run controlled third-party non-production interop (docs) | [docs/interop/d11c/](docs/interop/d11c/) |
+| Build or experiment with ABIS independently | [BUILD_WITH_ABIS.md](BUILD_WITH_ABIS.md) |
+| Understand architecture and boundaries | This README (below) |
 | Report validation evidence | [Validation Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
 | Report integration evidence | [Integration Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=integration-report.yml) |
 
-Quick Validation remains the fastest public path when you do not need an external Sandbox or Mock.
+---
+
+## Current Runtime (v0.8.0)
+
+Confirm live values from `GET /v1/reference-profile` (`runtime.version`, `profile_version`, `execution_surface_revision`).
+
+| Surface | Value (expected on main) |
+| --- | --- |
+| Runtime | **0.8.0** |
+| Profile | **5** |
+| Execution surface | **reference-execution-surface-6** |
+| Descriptor | **1** |
+
+### Execution classes (advertised)
+
+| Class | Scope |
+| --- | --- |
+| **CONTROLLED_SIMULATOR** | Default — in-process controlled simulators (`restaurant` / `reserve`, `shopping` / `submit_order`) |
+| **AUTHORIZED_NON_PRODUCTION** | Authorized HTTP(S) — **restaurant / `reserve` only** when trusted adapter config is enabled: localhost Mock HTTP (v0.7.0+) or remote authorized non-production Sandbox HTTPS (v0.8.0+) |
+| **REAL_EXTERNAL** | **DENY** |
+
+**shopping** / **submit_order**: external Sandbox execution is **NOT_IMPLEMENTED** (simulator only).  
+**Observe** (`POST /v1/demo/restaurant/observe`): **CONTROLLED_SIMULATOR** follow-up only — **not** supported for `AUTHORIZED_NON_PRODUCTION` external adapter runs.
+
+**Business Outcome** on Invoke: **`NOT_EVALUATED`**. Profile `outcome_boundary` may state `NOT_IMPLEMENTED` for capability — do not interchange with per-Invoke disposition.
 
 ---
 
@@ -30,7 +73,33 @@ Do **not** select an older tag merely because it appears in search results, cach
 
 If validating a historical release, report that explicitly in your Validation Report.
 
-When live execution is possible, include the Runtime-reported version from `GET /v1/reference-profile` (`runtime.version`) in your report. This is a validation-target freshness rule — not a normative ABIS semantic authority claim.
+When live execution is possible, include the Runtime-reported version from `GET /v1/reference-profile` (`runtime.version`) in your report. Current public Developer Preview on main is **v0.8.0** unless you intentionally validate an older tag. This is a validation-target freshness rule — not a normative ABIS semantic authority claim.
+
+---
+
+## What's new in v0.8.0 (vs v0.7.0)
+
+| Area | v0.7.0 | v0.8.0 |
+| --- | --- | --- |
+| Authorized external HTTP | Localhost Mock only (`restaurant` / `reserve`) | Adds **remote authorized non-production Sandbox HTTPS** (trusted config; not arbitrary URL) |
+| Transport | Bound destination + TLS verification for remote | Fail-closed egress (mixed DNS, TLS context invariants) |
+| Execution surface | `reference-execution-surface-5` | `reference-execution-surface-6` |
+
+**Unchanged limitations (still apply):** Developer Preview · not production · **REAL_EXTERNAL DENY** · not ABIS certification · not conformance determination · Business Outcome **`NOT_EVALUATED`** on Invoke · shopping external HTTP **NOT_IMPLEMENTED** · external Observe **not** for authorized HTTP adapter path.
+
+See [CHANGELOG.md](CHANGELOG.md) and [INTEGRATION.md](INTEGRATION.md) for integration paths. [BUILD_WITH_ABIS.md](BUILD_WITH_ABIS.md) is the developer-first entry for new builders.
+
+---
+
+## What's new in v0.7.0 (vs v0.6.0)
+
+| Area | v0.6.0 | v0.7.0 |
+| --- | --- | --- |
+| External execution | Simulator only | `AUTHORIZED_NON_PRODUCTION` localhost Mock HTTP for `restaurant` / `reserve` |
+| Execution surface | `reference-execution-surface-4` | `reference-execution-surface-5` |
+| Profile | `4` | `5` |
+
+**Unchanged limitations (still apply):** Developer Preview · not production · **REAL_EXTERNAL DENY** · Business Outcome **`NOT_EVALUATED`** · not certification/conformance determination.
 
 ---
 
@@ -141,7 +210,7 @@ The Reference Runtime Pointer is an **implementation-level, informative, referen
 
 ## Architecture
 
-### Discovery flow (v0.6.0)
+### Discovery flow (reference — v0.6.0)
 
 ```text
 Known Business Origin
@@ -165,10 +234,12 @@ Native Business Result + execution_provenance + trace_reference
 Outcome: NOT_EVALUATED
 ```
 
-Published interactions (v0.6.0):
+Published interactions (historical snapshot — v0.6.0):
 
 - `restaurant` / `reserve` / `CONTROLLED_SIMULATOR`
 - `shopping` / `submit_order` / `CONTROLLED_SIMULATOR`
+
+On **v0.8.0**, Profile also advertises `AUTHORIZED_NON_PRODUCTION` for `restaurant` / `reserve` when configured. See [Current Runtime (v0.8.0)](#current-runtime-v080) above.
 
 ### Direct Runtime flow (v0.2.0+, still supported)
 
@@ -513,7 +584,8 @@ Example request fixture: `examples/restaurant_observe_request.json`
 - **synthetic data only** — no real PII or production credentials
 - **controlled simulator** — no real booking or payment
 - **Bearer authentication** required (`ABIS_DEMO_GATEWAY_TOKEN`)
-- **CONTROLLED_SIMULATOR** execution class only
+- **Advertised execution classes** — `CONTROLLED_SIMULATOR` (default); `AUTHORIZED_NON_PRODUCTION` for configured `restaurant` / `reserve` only; **`REAL_EXTERNAL` DENY**
+- **No arbitrary URL proxy** — remote targets only via trusted adapter configuration
 
 ---
 
@@ -549,4 +621,4 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Status
 
-**Developer Preview** — v0.6.0. Not for production use.
+**Developer Preview** — v0.8.0. Not for production use.

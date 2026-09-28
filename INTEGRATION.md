@@ -6,11 +6,24 @@
 
 ---
 
+## Start with one interaction
+
+Have a **Sandbox**, **Mock**, **simulator**, or **authorized non-production** test API?
+
+**Start with one interaction.** You do not need production access. You do not need to implement every ABIS interaction. Use synthetic data only.
+
+| Developer entry | [BUILD_WITH_ABIS.md](BUILD_WITH_ABIS.md) |
+| --- | --- |
+
+---
+
 ## What this entry does
 
 **Map** one Sandbox / Mock interaction to the current ABIS Reference Runtime contract and produce **integration evidence**.
 
-### Mapping + Controlled Simulator (default integration path)
+Three **current-state** execution paths on v0.8.0 (choose one per experiment; do not mix semantics):
+
+### 1. Mapping + Controlled Simulator (default)
 
 ```text
 External Sandbox / Mock contract (your environment)
@@ -21,9 +34,13 @@ External Sandbox / Mock contract (your environment)
 
 This path **does not** invoke your external Sandbox or Mock over HTTP. Runtime execution uses `CONTROLLED_SIMULATOR` (in-process controlled simulators).
 
-On **v0.6.0**, this is the only Runtime execution mode for integration evidence. On **v0.7.0+**, it remains the default and does not require external adapter configuration.
+On **v0.6.0**, this was the only Runtime execution mode for integration evidence. On **v0.8.0**, it remains the **default** and does not require external adapter configuration.
 
-### Optional: authorized non-production HTTP (v0.7.0+ localhost · v0.8.0+ remote Sandbox HTTPS · `restaurant` / `reserve` only)
+### 2. AUTHORIZED_NON_PRODUCTION — localhost Mock HTTP (`restaurant` / `reserve` only)
+
+Trusted local adapter configuration; HTTP to explicit localhost targets only (see [examples/integration/restaurant_reserve_external.md](examples/integration/restaurant_reserve_external.md)).
+
+### 3. AUTHORIZED_NON_PRODUCTION — remote authorized Sandbox HTTPS (`restaurant` / `reserve` only)
 
 When the Reference Runtime advertises `AUTHORIZED_NON_PRODUCTION` and trusted local adapter configuration is enabled, `restaurant` / `reserve` may cross a real HTTP(S) boundary:
 
@@ -44,13 +61,7 @@ This is **not** production support, **not** `REAL_EXTERNAL`, **not** a generic H
 
 ---
 
-Have a **Sandbox**, **Mock**, or **simulator** API in your own non-production environment?
-
 Document how **one** ABIS Business Interaction maps to the Runtime contract, run Preflight / Invoke, and return **sanitized** evidence.
-
-You do **not** need to integrate your production system.  
-You do **not** need to implement every ABIS interaction.  
-**Start with one interaction.**
 
 | Boundary | Statement |
 | --- | --- |
@@ -172,8 +183,11 @@ An **unsuccessful** integration attempt is valid evidence.
 Integration experiments target the **same** Developer Preview gateway as validation:
 
 1. Follow [README — Quick Start](README.md#quick-start) (local token, `EXTERNAL_TEST`, port `9080`).
-2. Execute Profile → Descriptor → Preflight → Invoke for your chosen interaction.
-3. Your external Sandbox/Mock can run **in parallel** — the Reference Runtime still executes the **Controlled Simulator** unless you build a separate adapter outside this repository. This integration path documents **mapping + evidence**; it does not widen the public execution boundary.
+2. Execute Profile → Descriptor → Preflight → Invoke for your chosen interaction and **advertised** `execution_class`.
+3. **Path 1 (default):** mapping documents your external contract; Runtime executes **`CONTROLLED_SIMULATOR`** — your Sandbox/Mock may run in parallel for your own testing, but the Reference Runtime does not call it over HTTP on this path.
+4. **Paths 2–3:** configure `AUTHORIZED_NON_PRODUCTION` for **`restaurant` / `reserve` only** — localhost Mock HTTP or remote authorized Sandbox HTTPS per trusted config (not arbitrary URL; not `shopping`). See [restaurant_reserve_external.md](examples/integration/restaurant_reserve_external.md).
+
+`shopping` / `submit_order` remains **`CONTROLLED_SIMULATOR` only** (external Sandbox **NOT_IMPLEMENTED**).
 
 ---
 
