@@ -130,6 +130,9 @@ Distinguish **what you ran** from **what the repository describes**.
 | Intent | Link |
 | --- | --- |
 | Validation evidence | [Validation Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
-| Integration evidence | [Integration Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=integration-report.yml) |
+| Integration evidence (Sandbox/Mock + Reference Runtime) | [Integration Report Issue](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=integration-report.yml) |
+| Independent implementation / builder evidence | [Independent Builder Report](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=independent-builder-report.yml) |
+
+Independent Builder submissions use a separate **progression** and **evidence-authority** model — see [docs/independent-builders/](docs/independent-builders/README.md). This is experimental developer evidence, not certification or conformance.
 
 See also [INTEGRATION.md](INTEGRATION.md) for execution-class detail and [CHANGELOG.md](CHANGELOG.md) for version history.

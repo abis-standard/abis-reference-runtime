@@ -1,0 +1,224 @@
+name: ABIS Independent Builder Report
+description: Report evidence from an independent ABIS implementation or mapping experiment (not certification or conformance).
+title: "[Independent Builder] "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Independent Builder evidence
+
+        Report an **independent** ABIS implementation/mapping experiment using **public ABIS materials**.
+
+        **Not** certification · **not** conformance determination · **not** production readiness · **not** Business Outcome validation.
+
+        **Unsuccessful, partial, or blocked experiments are valid evidence.**
+
+        Protocol: [docs/independent-builders/README.md](https://github.com/abis-standard/abis-reference-runtime/blob/main/docs/independent-builders/README.md)
+
+        **DO NOT SUBMIT:** credentials, tokens, `Authorization` headers, passwords, PII, confidential data, or private/internal URLs.
+
+        Native Result ≠ Business Outcome. `ACTUALLY_EXECUTED` ≠ independently verified (not `REPRODUCED_BY_REVIEWER`).
+
+        For Sandbox/Mock **integration** with the Reference Runtime (D-11), use the **Integration Report** template instead.
+
+  - type: input
+    id: reporter
+    attributes:
+      label: Reporter / Organization
+      description: Optional. Sanitized name only.
+      placeholder: "e.g. individual builder or team name"
+
+  - type: checkboxes
+    id: independence_declarations
+    attributes:
+      label: Independence declarations
+      description: Required attestations
+      options:
+        - label: I am submitting work performed independently from ABIS maintainers.
+          required: true
+        - label: An ABIS maintainer did not implement or perform the mapping/implementation work for me (documentation links and clarification are OK).
+          required: true
+
+  - type: textarea
+    id: public_materials
+    attributes:
+      label: Public ABIS materials used
+      description: Required. Public sources only (repos, specs, BUILD_WITH_ABIS.md, Profile/Descriptor, etc.).
+      placeholder: |
+        - ABIS Reference Runtime @ commit …
+        - BUILD_WITH_ABIS.md
+        - …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: implementation_track
+    attributes:
+      label: Implementation track
+      description: Neither track is “better” — they answer different questions.
+      options:
+        - RUNTIME_ASSISTED (TRACK_A)
+        - INDEPENDENT_IMPLEMENTATION (TRACK_B)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: progression_level
+    attributes:
+      label: Progression level (participant-reported)
+      description: May be reclassified during evidence review. L3+ required for “Independent Implementation” claims.
+      options:
+        - L0 DISCOVERED
+        - L1 UNDERSTOOD
+        - L2 MAPPED
+        - L3 IMPLEMENTED
+        - L4 EXECUTED
+        - L5 EVIDENCE_COMPLETE
+    validations:
+      required: true
+
+  - type: dropdown
+    id: interaction
+    attributes:
+      label: Interaction
+      options:
+        - restaurant / reserve
+        - shopping / submit_order
+        - other public ABIS interaction / semantic experiment
+    validations:
+      required: true
+
+  - type: input
+    id: interaction_other
+    attributes:
+      label: Other interaction (if applicable)
+      description: Required when “other” selected. Does not imply unsupported Reference Runtime execution paths.
+      placeholder: "e.g. semantic mapping experiment on public ABIS interaction X"
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Language, framework, Sandbox/Mock/simulator, optional AI assistant, Reference Runtime version if Track A.
+      placeholder: |
+        Language: …
+        Framework/runtime: …
+        Environment: Sandbox / Mock / synthetic …
+        AI coding assistant (optional): …
+        Reference Runtime version (if applicable): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: mapping
+    attributes:
+      label: Mapping (L2+)
+      description: Required when claiming L2 or higher; write N/A if below L2.
+      placeholder: Field-level / operation-level mapping between ABIS interaction and your system.
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation_artifact
+    attributes:
+      label: Implementation artifact
+      description: Public repo URL, commit SHA, gist, or sanitized excerpt. PRIVATE / NOT_PUBLIC is allowed with description — do not paste proprietary code.
+      placeholder: |
+        Repo: …
+        Commit: …
+        Or: PRIVATE / NOT_PUBLIC — sanitized description …
+
+  - type: textarea
+    id: actually_executed
+    attributes:
+      label: ACTUALLY_EXECUTED
+      description: Operations you actually ran. Use NONE if none. This is participant execution provenance — not independent verification.
+      placeholder: |
+        - POST … Preflight (ACTUALLY_EXECUTED)
+        - …
+        Or: NONE
+    validations:
+      required: true
+
+  - type: textarea
+    id: native_result
+    attributes:
+      label: Native Result (sanitized)
+      description: Native Result ≠ Business Outcome. Use NOT_OBSERVED if not executed.
+      placeholder: Sanitized technical/native fields or NOT_OBSERVED
+
+  - type: dropdown
+    id: outcome_disposition
+    attributes:
+      label: Business Outcome disposition (where applicable)
+      options:
+        - NOT_EVALUATED
+        - NOT_OBSERVED
+        - NOT_APPLICABLE
+    validations:
+      required: true
+
+  - type: textarea
+    id: not_executed
+    attributes:
+      label: NOT_EXECUTED
+      description: Explicit steps/operations not run. NONE is valid.
+      placeholder: |
+        - Observe (NOT_EXECUTED)
+        - …
+        Or: NONE
+    validations:
+      required: true
+
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Blockers / limitations
+      description: documentation ambiguity, mapping ambiguity, environment, security boundary, unsupported capability, etc. “No blockers” is valid.
+      placeholder: |
+        - …
+        Or: No blockers
+    validations:
+      required: true
+
+  - type: textarea
+    id: supporting_evidence
+    attributes:
+      label: Supporting evidence
+      description: Links, commits, sanitized logs, excerpts. NONE is allowed — may affect evidence authority review.
+      placeholder: |
+        - …
+        Or: NONE
+    validations:
+      required: true
+
+  - type: dropdown
+    id: evidence_authority
+    attributes:
+      label: Supporting evidence status (participant claim)
+      description: REPRODUCED_BY_REVIEWER is assigned only after independent review — do not self-select it here.
+      options:
+        - PARTICIPANT_REPORTED
+        - ARTIFACT_SUPPORTED
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: safety_attestations
+    attributes:
+      label: Sanitization and safety
+      options:
+        - label: I removed credentials, tokens, passwords, Authorization headers, and secrets from this report.
+          required: true
+        - label: I removed PII and confidential business data.
+          required: true
+        - label: I used only non-production / synthetic scope where Reference Runtime execution was involved.
+          required: true
+        - label: I did not treat Native Result as Business Outcome success.
+          required: true
+        - label: I understand this report is not certification or conformance determination.
+          required: true
+        - label: I understand participant-reported execution is not independently verified merely by submitting this Issue.
+          required: true
