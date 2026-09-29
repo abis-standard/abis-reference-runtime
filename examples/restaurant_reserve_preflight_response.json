@@ -5,7 +5,7 @@
     "conformance_determination": false
   },
   "evidence": {
-    "execution_surface_revision": "reference-execution-surface-6",
+    "execution_surface_revision": "reference-execution-surface-7",
     "profile_version": 5,
     "runtime_version": "0.8.0"
   },

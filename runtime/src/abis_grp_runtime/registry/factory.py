@@ -6,6 +6,7 @@ from typing import Any
 
 from abis_grp_runtime.adapters.restaurant import RestaurantBusinessAdapter
 from abis_grp_runtime.adapters.shopping import ShoppingBusinessAdapter
+from abis_grp_runtime.adapters.travel import TravelStayReserveAdapter
 from abis_grp_runtime.registry.interaction_registry import (
     BusinessAdapterRegistration,
     RuntimeInteractionRegistry,
@@ -26,6 +27,13 @@ def build_reference_registry(crs_engine: Any, css_engine: Any) -> RuntimeInterac
         BusinessAdapterRegistration(
             adapter=ShoppingBusinessAdapter(css_engine),
             operation="submit_order",
+            published=True,
+        )
+    )
+    registry.register(
+        BusinessAdapterRegistration(
+            adapter=TravelStayReserveAdapter(),
+            operation="stay_reserve",
             published=True,
         )
     )

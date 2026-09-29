@@ -54,6 +54,10 @@ class CrossVerticalSurfaceTestCase(unittest.TestCase):
             ("shopping", "submit_order", "/v1/reference-profile/interactions/shopping/submit_order"),
             paths,
         )
+        self.assertIn(
+            ("travel", "stay_reserve", "/v1/reference-profile/interactions/travel/stay_reserve"),
+            paths,
+        )
 
     def test_descriptor_paths_match_profile(self) -> None:
         profile = self._get("/v1/reference-profile")

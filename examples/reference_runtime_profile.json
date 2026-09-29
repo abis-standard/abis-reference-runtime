@@ -1,7 +1,7 @@
 {
   "profile_kind": "abis-reference-runtime-profile",
   "profile_version": 5,
-  "execution_surface_revision": "reference-execution-surface-6",
+  "execution_surface_revision": "reference-execution-surface-7",
   "runtime": {
     "name": "abis-reference-runtime",
     "version": "0.8.0"
@@ -36,6 +36,20 @@
       "descriptor_path": "/v1/reference-profile/interactions/shopping/submit_order",
       "business_system": {
         "identifier": "abis-demo-commerce-simulator",
+        "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
+      }
+    },
+    {
+      "vertical": "travel",
+      "operation": "stay_reserve",
+      "execution_classes_allowed": ["CONTROLLED_SIMULATOR"],
+      "invocation": {
+        "method": "POST",
+        "path": "/v1/demo/travel/invoke"
+      },
+      "descriptor_path": "/v1/reference-profile/interactions/travel/stay_reserve",
+      "business_system": {
+        "identifier": "abis-demo-travel-stay-simulator",
         "classification": "EXTERNAL_BUSINESS_SYSTEM_TEST_DOUBLE"
       }
     }

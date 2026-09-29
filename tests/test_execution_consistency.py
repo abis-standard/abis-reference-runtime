@@ -47,6 +47,19 @@ def _invoke_payload(
             "idempotency_key": f"idem-{correlation_id}",
             "test_scenario": "NORMAL_SUCCESS",
         }
+    elif vertical == "travel" and operation == "stay_reserve":
+        structured = {
+            "stay": {"check_in": "2026-11-01", "check_out": "2026-11-02"},
+            "occupancy": {"rooms": 1, "adults": 2, "children": 0},
+            "holder": {"name": "ABIS", "surname": "Test"},
+            "guests": [
+                {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultOne"},
+                {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultTwo"},
+            ],
+            "selected_offer_reference": f"OPAQUE-{correlation_id}",
+            "client_reference": f"CLIENT-{correlation_id}",
+            "idempotency_key": f"idem-{correlation_id}",
+        }
     else:
         structured = {
             "date": "2026-09-12",
@@ -113,6 +126,22 @@ CONSISTENCY_MATRIX = [
         "vertical": "restaurant",
         "operation": "reserve",
         "execution_class": "REAL_EXTERNAL",
+        "advertised": False,
+        "preflight_state": PREFLIGHT_EXECUTION_DENIED,
+        "invoke_permitted": False,
+    },
+    {
+        "vertical": "travel",
+        "operation": "stay_reserve",
+        "execution_class": "CONTROLLED_SIMULATOR",
+        "advertised": True,
+        "preflight_state": PREFLIGHT_READY,
+        "invoke_permitted": True,
+    },
+    {
+        "vertical": "travel",
+        "operation": "stay_reserve",
+        "execution_class": "AUTHORIZED_NON_PRODUCTION",
         "advertised": False,
         "preflight_state": PREFLIGHT_EXECUTION_DENIED,
         "invoke_permitted": False,

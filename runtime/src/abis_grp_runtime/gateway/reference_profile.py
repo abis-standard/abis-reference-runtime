@@ -19,7 +19,7 @@ REFERENCE_PROFILE_PATH = "/v1/reference-profile"
 HEALTH_PATH = "/health"
 DESCRIPTOR_PATH_PREFIX = "/v1/reference-profile/interactions"
 
-FUTURE_VERTICALS_RESERVED = ("dental", "government", "travel")
+FUTURE_VERTICALS_RESERVED = ("dental", "government")
 
 
 def build_reference_runtime_profile(config: GatewayConfig) -> dict[str, Any]:
