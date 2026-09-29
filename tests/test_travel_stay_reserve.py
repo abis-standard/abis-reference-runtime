@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -14,6 +15,7 @@ ensure_paths()
 
 from abis_grp_runtime.adapters.errors import AdapterValidationError  # noqa: E402
 from abis_grp_runtime.adapters.travel import TravelStayReserveAdapter  # noqa: E402
+from abis_grp_runtime.agent.errors import AgentContractErrorCode  # noqa: E402
 from abis_grp_runtime.connectors.travel_stay_simulator import (  # noqa: E402
     TravelStaySimulatorConnector,
     travel_dict_to_native_envelope,
@@ -87,12 +89,83 @@ class TravelAdapterValidationTestCase(unittest.TestCase):
                 _valid_input(selected_offer_reference=""),
             )
 
+    def test_t1_adult_guest_floor_accepts_two_adults(self) -> None:
+        self.adapter.validate_structured_input("stay_reserve", _valid_input())
+
+    def test_t2_adult_guest_floor_rejects_one_adult_for_two(self) -> None:
+        with self.assertRaises(AdapterValidationError):
+            self.adapter.validate_structured_input(
+                "stay_reserve",
+                _valid_input(
+                    guests=[
+                        {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultOne"},
+                    ],
+                ),
+            )
+
+    def test_t3_single_adult_accepts(self) -> None:
+        self.adapter.validate_structured_input(
+            "stay_reserve",
+            _valid_input(
+                occupancy={"rooms": 1, "adults": 1, "children": 0},
+                guests=[{"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultOne"}],
+            ),
+        )
+
+    def test_t6_children_occupancy_without_child_roster_unchanged(self) -> None:
+        self.adapter.validate_structured_input(
+            "stay_reserve",
+            _valid_input(
+                occupancy={"rooms": 1, "adults": 2, "children": 1},
+                guests=[
+                    {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultOne"},
+                    {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultTwo"},
+                ],
+            ),
+        )
+
     def test_descriptor_developer_preview(self) -> None:
         descriptor = self.adapter.get_descriptor("stay_reserve")
         self.assertEqual(descriptor["vertical"], "travel")
         self.assertEqual(descriptor["operation"], "stay_reserve")
         self.assertEqual(descriptor["implementation_maturity"], "DEVELOPER_PREVIEW")
         self.assertEqual(descriptor["execution_classes_allowed"], ["CONTROLLED_SIMULATOR"])
+
+
+class TravelE2EInputConsistencyTestCase(unittest.TestCase):
+    def test_t4_service_rejects_before_connector(self) -> None:
+        service = make_test_service(tempfile.mkdtemp())
+        one_guest_payload = _invoke_payload(
+            input=_valid_input(
+                guests=[
+                    {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultOne"},
+                ],
+            ),
+        )
+        one_guest_payload["vertical"] = "travel"
+        with mock.patch(
+            "abis_grp_runtime.connectors.travel_stay_simulator.TravelStaySimulatorConnector.execute",
+            side_effect=AssertionError("connector must not run"),
+        ):
+            response = service.invoke_from_dict(one_guest_payload)
+        self.assertEqual(response.transport_status, "REJECTED")
+        assert response.error is not None
+        self.assertEqual(response.error.code, AgentContractErrorCode.INVALID_REQUEST)
+        self.assertIsNone(response.native_result)
+        self.assertIsNone(response.outcome_disposition)
+        provenance = response.execution_provenance or {}
+        self.assertNotEqual(provenance.get("external_request_attempted"), True)
+
+    def test_t4_service_accepts_valid_input_and_calls_connector(self) -> None:
+        service = make_test_service(tempfile.mkdtemp())
+        payload = _invoke_payload()
+        payload["vertical"] = "travel"
+        with mock.patch(
+            "abis_grp_runtime.connectors.travel_stay_simulator.TravelStaySimulatorConnector.execute",
+        ) as execute_mock:
+            response = service.invoke_from_dict(payload)
+        self.assertEqual(response.transport_status, "ACCEPTED")
+        execute_mock.assert_called_once()
 
 
 class TravelSimulatorTestCase(unittest.TestCase):
@@ -164,6 +237,20 @@ class TravelGatewayTestCase(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(body["preflight_state"], PREFLIGHT_ADAPTER_NOT_CONFIGURED)
+
+    def test_t5_gateway_rejects_adult_guest_mismatch(self) -> None:
+        status, body = self._post(
+            "/v1/demo/travel/invoke",
+            _invoke_payload(
+                input=_valid_input(
+                    guests=[
+                        {"room_id": 1, "type": "AD", "name": "Test", "surname": "AdultOne"},
+                    ],
+                ),
+            ),
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"]["code"], "REQUEST_INVALID")
 
     def test_invoke_success_not_evaluated(self) -> None:
         status, body = self._post("/v1/demo/travel/invoke", _invoke_payload())
