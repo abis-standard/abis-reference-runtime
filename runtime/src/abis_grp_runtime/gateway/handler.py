@@ -330,8 +330,35 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
             "transport_status": body.get("transport_status"),
         }
         exec_class = str(execution.get("execution_class") or "").upper()
+        provenance = body.get("execution_provenance") or {}
+        external_execution = (
+            provenance.get("external_execution") if isinstance(provenance, dict) else None
+        ) or {}
         if vertical == "travel" and exec_class == "AUTHORIZED_NON_PRODUCTION":
             evidence_record["external_identifier_present"] = bool(native.get("external_identifier"))
+            if isinstance(external_execution, dict):
+                provider_http = external_execution.get("http_status")
+                if provider_http is not None:
+                    evidence_record["http_status"] = provider_http
+                for key in (
+                    "http_status_class",
+                    "error_code",
+                    "error_category",
+                    "response_json_parse_succeeded",
+                    "response_mapping_succeeded",
+                    "provider_native_status_present",
+                ):
+                    if external_execution.get(key) is not None:
+                        evidence_record[key] = external_execution.get(key)
+            if isinstance(provenance, dict):
+                if provenance.get("external_request_attempted") is not None:
+                    evidence_record["external_request_attempted"] = bool(
+                        provenance.get("external_request_attempted")
+                    )
+                if provenance.get("external_response_received") is not None:
+                    evidence_record["external_response_received"] = bool(
+                        provenance.get("external_response_received")
+                    )
         else:
             evidence_record["external_identifier"] = native.get("external_identifier")
         append_evidence(self.config.evidence_log_path, evidence_record)

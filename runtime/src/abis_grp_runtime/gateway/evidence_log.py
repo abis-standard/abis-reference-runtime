@@ -32,6 +32,18 @@ def _safe_record(record: Mapping[str, Any]) -> dict[str, Any]:
         safe["external_identifier_present"] = bool(record.get("external_identifier_present"))
     elif record.get("external_identifier") is not None:
         safe["external_identifier"] = record.get("external_identifier")
+    for key in (
+        "http_status_class",
+        "error_code",
+        "error_category",
+        "response_json_parse_succeeded",
+        "response_mapping_succeeded",
+        "provider_native_status_present",
+        "external_request_attempted",
+        "external_response_received",
+    ):
+        if record.get(key) is not None:
+            safe[key] = record.get(key)
     return safe
 
 
