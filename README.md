@@ -47,19 +47,20 @@ Confirm live values from `GET /v1/reference-profile` (`runtime.version`, `profil
 | --- | --- |
 | Runtime | **0.8.0** |
 | Profile | **5** |
-| Execution surface | **reference-execution-surface-6** |
+| Execution surface | **reference-execution-surface-7** |
 | Descriptor | **1** |
 
 ### Execution classes (advertised)
 
 | Class | Scope |
 | --- | --- |
-| **CONTROLLED_SIMULATOR** | Default — in-process controlled simulators (`restaurant` / `reserve`, `shopping` / `submit_order`) |
+| **CONTROLLED_SIMULATOR** | Default — in-process controlled simulators (`restaurant` / `reserve`, `shopping` / `submit_order`, `travel` / `stay_reserve`) |
 | **AUTHORIZED_NON_PRODUCTION** | Authorized HTTP(S) — **restaurant / `reserve` only** when trusted adapter config is enabled: localhost Mock HTTP (v0.7.0+) or remote authorized non-production Sandbox HTTPS (v0.8.0+) |
 | **REAL_EXTERNAL** | **DENY** |
 
 **shopping** / **submit_order**: external Sandbox execution is **NOT_IMPLEMENTED** (simulator only).  
-**Observe** (`POST /v1/demo/restaurant/observe`): **CONTROLLED_SIMULATOR** follow-up only — **not** supported for `AUTHORIZED_NON_PRODUCTION` external adapter runs.
+**travel** / **stay_reserve** (**Developer Preview** on current main): **`CONTROLLED_SIMULATOR` only** · external provider execution **NOT_IMPLEMENTED** · real hotel booking **not performed** · Travel Observe **unsupported** · Invoke Business Outcome **`NOT_EVALUATED`** (Native Result ≠ Business Outcome). See `examples/integration/travel_stay_reserve_developer_preview.md`.  
+**Observe** (`POST /v1/demo/restaurant/observe`): **CONTROLLED_SIMULATOR** follow-up only — **not** supported for `AUTHORIZED_NON_PRODUCTION` external adapter runs or **travel**.
 
 **Business Outcome** on Invoke: **`NOT_EVALUATED`**. Profile `outcome_boundary` may state `NOT_IMPLEMENTED` for capability — do not interchange with per-Invoke disposition.
 
@@ -191,7 +192,7 @@ The Reference Runtime Pointer is an **implementation-level, informative, referen
 ## What this is
 
 - An **executable reference implementation** of the ABIS Business Interaction flow
-- A **localhost HTTP gateway** for multi-vertical reference interactions (`restaurant`, `shopping`)
+- A **localhost HTTP gateway** for multi-vertical reference interactions (`restaurant`, `shopping`, `travel` Developer Preview simulator)
 - An **ABIS Runtime Core** pipeline (authorization → execution → connector → trace)
 - A **Controlled Reservation Simulator** with persistent `state.json`
 - **Native Business Result** return, **idempotency**, and **execution trace** (`trace_reference`)

@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased — Developer Preview (current main)
+
+Experimental **travel** interaction on the Reference Runtime. **Not** a new Runtime release tag; Runtime version remains **0.8.0**.
+
+### Added
+
+- `travel` / `stay_reserve` — provider-neutral structured input; **`CONTROLLED_SIMULATOR` only**
+- `TravelStayReserveAdapter` and in-process travel stay simulator (synthetic technical result — not a real reservation)
+- `examples/integration/travel_stay_reserve_developer_preview.md`
+
+### Changed
+
+- `execution_surface_revision`: `reference-execution-surface-6` → `reference-execution-surface-7` on current main
+- Reference Runtime Profile advertises `travel` / `stay_reserve` (removed from `FUTURE_VERTICALS_RESERVED` for travel)
+
+### Unchanged boundaries
+
+- No normative ABIS change
+- Travel external provider execution **NOT_IMPLEMENTED**; no HBX/mTLS in this phase
+- Travel Observe **unsupported**
+- Business Outcome on Invoke remains **`NOT_EVALUATED`**
+- `restaurant` / `shopping` authorized and simulator behavior unchanged except execution surface revision metadata in fixtures
+
 ## v0.8.0 — Developer Preview (remote authorized Sandbox HTTPS)
 
 ### Added
