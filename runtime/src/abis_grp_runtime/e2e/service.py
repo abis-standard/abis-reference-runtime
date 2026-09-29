@@ -9,6 +9,7 @@ from abis_grp_runtime.agent.adapter import ExternalAgentAdapter
 from abis_grp_runtime.agent.envelope import AgentRequestEnvelope, AgentResponseEnvelope
 from abis_grp_runtime.agent.execution_provenance import build_execution_provenance, merge_connector_provenance
 from abis_grp_runtime.connectors.authorized_http_sandbox import AuthorizedHttpSandboxConnector
+from abis_grp_runtime.connectors.authorized_mtls_sandbox import AuthorizedMtlsSandboxConnector
 from abis_grp_runtime.execution import ExecutionClass
 from abis_grp_runtime.agent.serialization import request_from_dict
 from abis_grp_runtime.core import RuntimeCore
@@ -56,7 +57,7 @@ class GrokE2EService:
             implementation_continuity_reference=icr,
         )
         response = adapter_client.invoke(request, execution_provenance=provenance)
-        if isinstance(connector, AuthorizedHttpSandboxConnector):
+        if isinstance(connector, (AuthorizedHttpSandboxConnector, AuthorizedMtlsSandboxConnector)):
             response = replace(
                 response,
                 execution_provenance=merge_connector_provenance(

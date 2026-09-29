@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from abis_grp_runtime.adapters.restaurant import RestaurantBusinessAdapter
+from abis_grp_runtime.adapters.travel import TravelStayReserveAdapter
 from abis_grp_runtime.execution import ExecutionClass
 from abis_grp_runtime.gateway.config import GatewayConfig
 from abis_grp_runtime.gateway.execution_surface import EXECUTION_SURFACE_REVISION, find_advertised_interaction
@@ -105,6 +106,24 @@ def _evidence_metadata(correlation_id: str | None = None) -> dict[str, Any]:
     return evidence
 
 
+def evaluate_travel_hbx_preflight(adapter: TravelStayReserveAdapter) -> str | None:
+    """Structural HBX TEST mTLS config checks — no network I/O."""
+    cfg = adapter.hbx_mtls_adapter_config()
+    if not adapter.hbx_mtls_adapter_configured() or cfg is None:
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    if not cfg.structurally_valid():
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    if not cfg.environment_classification.potentially_allowed():
+        return PREFLIGHT_ENVIRONMENT_PROHIBITED
+    if not cfg.certificate_paths_available():
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    if not cfg.passphrase_available():
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    if not cfg.api_credentials_available():
+        return PREFLIGHT_ADAPTER_NOT_CONFIGURED
+    return None
+
+
 def _evaluate_authorized_adapter_preflight(vertical: str, operation: str) -> str | None:
     """Return a non-ready preflight state, or None when adapter checks pass."""
     try:
@@ -145,6 +164,51 @@ def evaluate_preflight(
             "vertical": vertical_norm,
             "operation": operation,
             "execution_class": execution_class,
+            "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+            "evidence": evidence,
+        }
+
+    if (
+        vertical_norm == "travel"
+        and operation.strip().lower() == "stay_reserve"
+        and execution_class == ExecutionClass.AUTHORIZED_NON_PRODUCTION.value
+    ):
+        try:
+            adapter = require_active_registry().get_adapter(vertical_norm, operation)
+        except KeyError:
+            return {
+                "preflight_state": PREFLIGHT_NOT_ADVERTISED,
+                "vertical": vertical_norm,
+                "operation": operation,
+                "execution_class": execution_class,
+                "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+                "evidence": evidence,
+            }
+        if not isinstance(adapter, TravelStayReserveAdapter):
+            return {
+                "preflight_state": PREFLIGHT_ADAPTER_NOT_CONFIGURED,
+                "vertical": vertical_norm,
+                "operation": operation,
+                "execution_class": execution_class,
+                "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+                "evidence": evidence,
+            }
+        travel_state = evaluate_travel_hbx_preflight(adapter)
+        if travel_state is not None:
+            return {
+                "preflight_state": travel_state,
+                "vertical": vertical_norm,
+                "operation": operation,
+                "execution_class": execution_class,
+                "disclaimer": dict(PREFLIGHT_DISCLAIMER),
+                "evidence": evidence,
+            }
+        return {
+            "preflight_state": PREFLIGHT_READY,
+            "vertical": vertical_norm,
+            "operation": operation,
+            "execution_class": execution_class,
+            "invocation": matched.to_dict()["invocation"],
             "disclaimer": dict(PREFLIGHT_DISCLAIMER),
             "evidence": evidence,
         }

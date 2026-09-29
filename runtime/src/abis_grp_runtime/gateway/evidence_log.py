@@ -12,7 +12,7 @@ _LOCK = threading.Lock()
 
 
 def _safe_record(record: Mapping[str, Any]) -> dict[str, Any]:
-    return {
+    safe: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "correlation_id": record.get("correlation_id"),
         "agent_type": record.get("agent_type"),
@@ -27,8 +27,12 @@ def _safe_record(record: Mapping[str, Any]) -> dict[str, Any]:
         "gateway_error_code": record.get("gateway_error_code"),
         "observation_kind": record.get("observation_kind"),
         "implementation_continuity_reference": record.get("implementation_continuity_reference"),
-        "external_identifier": record.get("external_identifier"),
     }
+    if record.get("external_identifier_present") is not None:
+        safe["external_identifier_present"] = bool(record.get("external_identifier_present"))
+    elif record.get("external_identifier") is not None:
+        safe["external_identifier"] = record.get("external_identifier")
+    return safe
 
 
 def append_evidence(path: str | None, record: Mapping[str, Any]) -> None:
