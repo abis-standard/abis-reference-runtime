@@ -82,9 +82,9 @@ class TestReferenceProfileEndpoint(ReferenceProfileTestCase):
     def test_advertised_interactions_match_gateway_truth(self) -> None:
         _, body, _ = self._get("/v1/reference-profile")
         interactions = body["advertised_interactions"]
-        self.assertEqual(len(interactions), 2)
+        self.assertEqual(len(interactions), 3)
         verticals = {item["vertical"] for item in interactions}
-        self.assertEqual(verticals, {"restaurant", "shopping"})
+        self.assertEqual(verticals, {"restaurant", "shopping", "travel"})
         item = next(i for i in interactions if i["vertical"] == "restaurant")
         self.assertEqual(item["operation"], "reserve")
         self.assertIn("descriptor_path", item)
@@ -152,8 +152,8 @@ class TestHealthCompatibility(ReferenceProfileTestCase):
         status, body, _ = self._get("/health")
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["verticals_enabled"], ["restaurant", "shopping"])
-        self.assertEqual(sorted(body["operations_allowed"]), ["reserve", "submit_order"])
+        self.assertEqual(body["verticals_enabled"], ["restaurant", "shopping", "travel"])
+        self.assertEqual(sorted(body["operations_allowed"]), ["reserve", "stay_reserve", "submit_order"])
         self.assertEqual(
             body["execution_class_allowed"],
             ["AUTHORIZED_NON_PRODUCTION", "CONTROLLED_SIMULATOR"],

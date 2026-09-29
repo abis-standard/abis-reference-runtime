@@ -20,7 +20,7 @@
     },
     "descriptor_path": "/v1/reference-profile/interactions/restaurant/reserve",
     "descriptor_version": 1,
-    "execution_surface_revision": "reference-execution-surface-6",
+    "execution_surface_revision": "reference-execution-surface-7",
     "interaction": {
       "operation": "reserve",
       "vertical": "restaurant"

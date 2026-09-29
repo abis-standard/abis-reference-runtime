@@ -214,7 +214,7 @@ class TestPreflightBoundaries(PreflightTestCase):
     def test_health_compatible(self) -> None:
         health = self._get("/health")
         self.assertTrue(health["ok"])
-        self.assertEqual(sorted(health["operations_allowed"]), ["reserve", "submit_order"])
+        self.assertEqual(sorted(health["operations_allowed"]), ["reserve", "stay_reserve", "submit_order"])
 
 
 if __name__ == "__main__":

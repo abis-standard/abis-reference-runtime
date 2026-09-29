@@ -200,8 +200,8 @@ class TestReferenceClientNegativeE2E(GatewayServerTestCase):
         self.assertEqual(self._reservation_count(), 0)
 
     def test_not_advertised_vertical(self) -> None:
-        client = self._client(vertical="travel")
-        result = client.execute(_invoke_payload(correlation_id="neg-travel-001"))
+        client = self._client(vertical="dental")
+        result = client.execute(_invoke_payload(correlation_id="neg-dental-001"))
         self.assertFalse(result.invoke_attempted)
         self.assertIn(result.error or "", ("requested interaction not present in profile", "preflight not ready"))
 

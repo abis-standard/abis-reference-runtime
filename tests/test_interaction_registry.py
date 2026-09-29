@@ -30,7 +30,11 @@ class TestInteractionRegistry(unittest.TestCase):
         keys = {(entry.vertical, entry.operation) for entry in published}
         self.assertEqual(
             keys,
-            {("restaurant", "reserve"), ("shopping", "submit_order")},
+            {
+                ("restaurant", "reserve"),
+                ("shopping", "submit_order"),
+                ("travel", "stay_reserve"),
+            },
         )
 
     def test_implemented_equals_published_for_reference(self) -> None:
