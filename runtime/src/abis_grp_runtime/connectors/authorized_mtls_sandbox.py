@@ -16,6 +16,9 @@ from abis_grp_runtime.connectors.non_production_egress import (
     NonProductionEgressPolicy,
     ValidatedDestination,
 )
+from abis_grp_runtime.connectors.providers.hbx_external_observability import (
+    build_external_execution_observability,
+)
 from abis_grp_runtime.connectors.providers.hbx_test_booking import (
     CONNECTOR_ID,
     HBX_TEST_AUTHORIZED_BOOKING_PATH,
@@ -100,6 +103,7 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
         provider_native_status: str | None = None,
         destination: ValidatedDestination | None = None,
         tls_verified: bool = False,
+        external_execution: dict[str, Any] | None = None,
     ) -> None:
         egress: dict[str, Any] = {
             "decision": egress_decision,
@@ -122,6 +126,8 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
             meta["provider_native_status"] = provider_native_status
         if destination is not None:
             meta["transport"] = {"tls": "VERIFIED" if tls_verified else "NOT_ATTEMPTED", "mtls": "CLIENT_CERT"}
+        if external_execution:
+            meta["external_execution"] = dict(external_execution)
         self._last_metadata = meta
 
     def _failure(
@@ -134,13 +140,25 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
         egress_decision: str = "DENY",
         egress_reason: str = "",
         destination: ValidatedDestination | None = None,
+        http_status: int | None = None,
+        response_json_parse_succeeded: bool | None = None,
+        response_mapping_succeeded: bool | None = None,
     ) -> NativeResultEnvelope:
+        external_execution = build_external_execution_observability(
+            http_status=http_status,
+            error_code=code,
+            response_json_parse_succeeded=response_json_parse_succeeded,
+            response_mapping_succeeded=response_mapping_succeeded,
+            provider_native_status_present=False,
+            external_identifier_present=False,
+        )
         self._set_metadata(
             external_request_attempted=attempted,
             external_response_received=received,
             egress_decision=egress_decision,
             egress_reason=egress_reason or message,
             destination=destination,
+            external_execution=external_execution,
         )
         return NativeResultEnvelope(
             technical_status="TRANSPORT_FAILED",
@@ -292,6 +310,7 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
             )
 
         if status == 401 or status == 403:
@@ -303,6 +322,7 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
             )
 
         if 400 <= status < 500:
@@ -314,6 +334,7 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
             )
         if status >= 500:
             return self._failure(
@@ -324,17 +345,21 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
             )
 
         if not content_type.lower().startswith("application/json"):
             return self._failure(
-                "MALFORMED_EXTERNAL_RESPONSE",
+                "UNEXPECTED_CONTENT_TYPE",
                 "unexpected Content-Type",
                 attempted=True,
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
+                response_json_parse_succeeded=False,
+                response_mapping_succeeded=False,
             )
 
         if len(response_bytes) > self._config.max_response_bytes:
@@ -346,6 +371,9 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
+                response_json_parse_succeeded=False,
+                response_mapping_succeeded=False,
             )
 
         parsed = parse_hbx_json_response(response_bytes)
@@ -358,20 +386,34 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
+                response_json_parse_succeeded=False,
+                response_mapping_succeeded=False,
             )
 
         native = map_hbx_booking_response_to_native(parsed, timing_ms=timing_ms)
         if native is None:
             return self._failure(
-                "MALFORMED_EXTERNAL_RESPONSE",
+                "RESPONSE_MAPPING_FAILED",
                 "response mapping failed",
                 attempted=True,
                 received=True,
                 egress_decision="ALLOW",
                 egress_reason=verdict.reason,
                 destination=destination,
+                http_status=status,
+                response_json_parse_succeeded=True,
+                response_mapping_succeeded=False,
             )
 
+        success_observability = build_external_execution_observability(
+            http_status=status,
+            error_code=None,
+            response_json_parse_succeeded=True,
+            response_mapping_succeeded=True,
+            provider_native_status_present=bool(native.external_status),
+            external_identifier_present=bool(native.external_identifier),
+        )
         self._set_metadata(
             external_request_attempted=True,
             external_response_received=True,
@@ -380,5 +422,6 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
             provider_native_status=native.external_status,
             destination=destination,
             tls_verified=True,
+            external_execution=success_observability,
         )
         return native
