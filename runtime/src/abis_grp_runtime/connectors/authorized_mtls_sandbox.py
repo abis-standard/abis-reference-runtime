@@ -18,6 +18,7 @@ from abis_grp_runtime.connectors.non_production_egress import (
 )
 from abis_grp_runtime.connectors.providers.hbx_test_booking import (
     CONNECTOR_ID,
+    HBX_TEST_AUTHORIZED_BOOKING_PATH,
     PROVIDER_ENVIRONMENT,
     build_auth_headers,
     map_hbx_booking_response_to_native,
@@ -187,8 +188,15 @@ class AuthorizedMtlsSandboxConnector(BusinessConnectorPort):
         if not self._config.passphrase_available():
             return self._failure("MTLS_CONFIG_MISSING", "private key passphrase not available")
 
-        path = self._config.allowed_paths[0]
-        destination, verdict = self._policy.resolve_validated_destination(path)
+        booking_path = HBX_TEST_AUTHORIZED_BOOKING_PATH
+        if booking_path not in self._config.allowed_paths:
+            return self._failure(
+                "EGRESS_DENIED",
+                "authorized booking path not in allowlist",
+                egress_decision="DENY",
+                egress_reason="authorized booking path not in allowlist",
+            )
+        destination, verdict = self._policy.resolve_validated_destination(booking_path)
         if verdict.decision is EgressDecision.DENY or destination is None:
             return self._failure(
                 "EGRESS_DENIED",

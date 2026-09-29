@@ -56,9 +56,13 @@ def map_stay_reserve_to_hbx_request(ctx: Mapping[str, Any]) -> dict[str, Any] | 
     try:
         holder = dict(ctx.get("holder") or {})
         guests = list(ctx.get("guests") or [])
-        offer_ref = str(ctx.get("selected_offer_reference") or "").strip()
-        client_ref = str(ctx.get("client_reference") or "").strip()
-        if not offer_ref or not client_ref:
+        offer_raw = ctx.get("selected_offer_reference")
+        client_raw = ctx.get("client_reference")
+        if offer_raw is None or client_raw is None:
+            return None
+        offer_ref = offer_raw if isinstance(offer_raw, str) else str(offer_raw)
+        client_ref = client_raw if isinstance(client_raw, str) else str(client_raw)
+        if not offer_ref.strip() or not client_ref.strip():
             return None
         paxes = []
         for guest in guests:

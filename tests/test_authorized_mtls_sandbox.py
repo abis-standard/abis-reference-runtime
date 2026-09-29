@@ -187,6 +187,48 @@ class AuthorizedMtlsConnectorTestCase(unittest.TestCase):
                 native = connector.execute("stay_reserve", synthetic_stay_reserve_context())
             self.assertEqual(native.error.get("code"), "AUTH_REJECTED")
 
+    def test_booking_path_independent_of_allowlist_order(self) -> None:
+        fixture = load_hbx_fixture("booking_confirmed_success.json")
+        captured_paths: list[str] = []
+
+        def _capture_post(destination, path, headers, body, timeout, max_response_bytes, ssl_context):  # noqa: ANN001
+            captured_paths.append(path)
+            return _mock_https_success(fixture)(
+                destination, path, headers, body, timeout, max_response_bytes, ssl_context
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            decoy = "/hotel-api/1.0/decoy-path-synthetic"
+            cfg = synthetic_hbx_config(
+                tmp,
+                allowed_paths=(decoy, HBX_TEST_AUTHORIZED_BOOKING_PATH),
+            )
+            self.assertIn(HBX_TEST_AUTHORIZED_BOOKING_PATH, cfg.allowed_paths)
+            connector = AuthorizedMtlsSandboxConnector(
+                cfg,
+                https_post=_capture_post,
+                unix_timestamp=1_700_000_000,
+            )
+            with _NetworkTripwire(), mock.patch(
+                "abis_grp_runtime.connectors.authorized_mtls_sandbox.build_client_mtls_context",
+                return_value=ssl.create_default_context(),
+            ):
+                native = connector.execute("stay_reserve", synthetic_stay_reserve_context())
+            self.assertEqual(native.technical_status, "TRANSPORT_OK")
+            self.assertEqual(captured_paths, [HBX_TEST_AUTHORIZED_BOOKING_PATH])
+
+    def test_booking_path_missing_from_allowlist_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = synthetic_hbx_config(
+                tmp,
+                allowed_paths=("/hotel-api/1.0/decoy-only-synthetic",),
+            )
+            self.assertFalse(cfg.structurally_valid())
+            connector = AuthorizedMtlsSandboxConnector(cfg, unix_timestamp=1)
+            native = connector.execute("stay_reserve", synthetic_stay_reserve_context())
+            self.assertEqual(native.technical_status, "TRANSPORT_FAILED")
+            self.assertEqual(native.error.get("code"), "ADAPTER_NOT_CONFIGURED")
+
     def test_egress_denies_non_booking_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cfg = synthetic_hbx_config(tmp)

@@ -76,6 +76,14 @@ class HbxMappingTestCase(unittest.TestCase):
     def test_booking_path_constant(self) -> None:
         self.assertEqual(HBX_TEST_AUTHORIZED_BOOKING_PATH, "/hotel-api/1.0/bookings")
 
+    def test_opaque_offer_exact_copy_with_surrounding_whitespace(self) -> None:
+        sentinel = "  OPAQUE-WHITESPACE-SENTINEL-C2  "
+        mapped = map_stay_reserve_to_hbx_request(
+            synthetic_stay_reserve_context(selected_offer_reference=sentinel),
+        )
+        assert mapped is not None
+        self.assertEqual(mapped["rooms"][0]["rateKey"], sentinel)
+
 
 if __name__ == "__main__":
     unittest.main()

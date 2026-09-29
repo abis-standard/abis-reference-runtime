@@ -163,8 +163,8 @@ class TravelStayReserveAdapter(BusinessInteractionAdapter):
         if children < 0:
             raise AdapterValidationError("occupancy.children must be >= 0")
 
-        offer_ref = str(data.get("selected_offer_reference") or "").strip()
-        if not offer_ref:
+        raw_offer = data.get("selected_offer_reference")
+        if not isinstance(raw_offer, str) or not raw_offer.strip():
             raise AdapterValidationError("selected_offer_reference must be non-empty")
         client_reference = str(data.get("client_reference") or "").strip()
         if not client_reference:
