@@ -21,6 +21,7 @@ from abis_grp_runtime.gateway.execution_surface import (  # noqa: E402
     reference_execution_surface,
 )
 from abis_grp_runtime.gateway.preflight import (  # noqa: E402
+    PREFLIGHT_ADAPTER_NOT_CONFIGURED,
     PREFLIGHT_EXECUTION_DENIED,
     PREFLIGHT_NOT_ADVERTISED,
     PREFLIGHT_READY,
@@ -143,7 +144,7 @@ CONSISTENCY_MATRIX = [
         "operation": "stay_reserve",
         "execution_class": "AUTHORIZED_NON_PRODUCTION",
         "advertised": False,
-        "preflight_state": PREFLIGHT_EXECUTION_DENIED,
+        "preflight_state": PREFLIGHT_ADAPTER_NOT_CONFIGURED,
         "invoke_permitted": False,
     },
 ]

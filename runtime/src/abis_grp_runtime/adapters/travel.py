@@ -14,6 +14,8 @@ from abis_grp_runtime.adapters._validation import (
 from abis_grp_runtime.adapters.errors import AdapterValidationError
 from abis_grp_runtime.adapters.protocol import BusinessInteractionAdapter
 from abis_grp_runtime.connector import BusinessConnectorPort
+from abis_grp_runtime.adapters.hbx_test_adapter_config import HbxTestMtlsAdapterConfig
+from abis_grp_runtime.connectors.authorized_mtls_sandbox import AuthorizedMtlsSandboxConnector
 from abis_grp_runtime.connectors.travel_stay_simulator import TravelStaySimulatorConnector
 from abis_grp_runtime.descriptor.builder import build_descriptor
 from abis_grp_runtime.execution import ExecutionClass
@@ -101,8 +103,20 @@ class TravelStayReserveAdapter(BusinessInteractionAdapter):
     default_execution_classes = frozenset({"CONTROLLED_SIMULATOR"})
     business_system_identifier = "abis-demo-travel-stay-simulator"
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        hbx_mtls_config: HbxTestMtlsAdapterConfig | None = None,
+        hbx_mtls_connector: AuthorizedMtlsSandboxConnector | None = None,
+    ) -> None:
         self._simulator_connector = TravelStaySimulatorConnector()
+        self._hbx_mtls_config = hbx_mtls_config
+        if hbx_mtls_connector is not None:
+            self._hbx_mtls_connector = hbx_mtls_connector
+        elif hbx_mtls_config is not None and hbx_mtls_config.enabled:
+            self._hbx_mtls_connector = AuthorizedMtlsSandboxConnector(hbx_mtls_config)
+        else:
+            self._hbx_mtls_connector = None
 
     def validate_structured_input(self, operation: str, structured_input: Mapping[str, Any]) -> None:
         if operation.strip().lower() != "stay_reserve":
@@ -180,8 +194,20 @@ class TravelStayReserveAdapter(BusinessInteractionAdapter):
     def get_connector(self) -> BusinessConnectorPort:
         return self._simulator_connector
 
+    def hbx_mtls_adapter_configured(self) -> bool:
+        return self._hbx_mtls_connector is not None and (
+            self._hbx_mtls_config is None or self._hbx_mtls_config.structurally_valid()
+        )
+
+    def hbx_mtls_adapter_config(self) -> HbxTestMtlsAdapterConfig | None:
+        return self._hbx_mtls_config
+
     def get_connector_for_execution_class(self, execution_class: str) -> BusinessConnectorPort:
         normalized = str(execution_class or "").strip().upper()
         if normalized == ExecutionClass.CONTROLLED_SIMULATOR.value:
             return self._simulator_connector
+        if normalized == ExecutionClass.AUTHORIZED_NON_PRODUCTION.value:
+            if self._hbx_mtls_connector is None:
+                raise ValueError("AUTHORIZED_NON_PRODUCTION not configured for travel adapter")
+            return self._hbx_mtls_connector
         raise ValueError(f"execution_class {execution_class} not supported by travel adapter")

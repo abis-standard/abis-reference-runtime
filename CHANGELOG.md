@@ -15,10 +15,17 @@ Experimental **travel** interaction on the Reference Runtime. **Not** a new Runt
 - `execution_surface_revision`: `reference-execution-surface-6` → `reference-execution-surface-7` on current main
 - Reference Runtime Profile advertises `travel` / `stay_reserve` (removed from `FUTURE_VERTICALS_RESERVED` for travel)
 
+### Added (D-11S-05C2 — mock-validated only)
+
+- `AuthorizedMtlsSandboxConnector` and HBX TEST booking mapper (injected/mock transport; **no live HBX in C2**)
+- Local HBX TEST mTLS operator configuration model (certificate paths, passphrase provider, API key/secret env vars)
+- Travel `AUTHORIZED_NON_PRODUCTION` preflight checks when HBX TEST config is present (no network I/O)
+
 ### Unchanged boundaries
 
 - No normative ABIS change
-- Travel external provider execution **NOT_IMPLEMENTED**; no HBX/mTLS in this phase
+- Travel **not** publicly advertised for `AUTHORIZED_NON_PRODUCTION` until C3 live controlled interop
+- Travel external provider execution remains **unverified** in C2 (fixture/mock validation only)
 - Travel Observe **unsupported**
 - Business Outcome on Invoke remains **`NOT_EVALUATED`**
 - `restaurant` / `shopping` authorized and simulator behavior unchanged except execution surface revision metadata in fixtures

@@ -24,5 +24,6 @@ allowed_paths:
   - reference-business/**
   - runtime/**
   - tests/**
+  - fixtures/**
   - validation/**
   - .abis/disclosure-approval.json

@@ -315,23 +315,25 @@ class ExternalDemoGatewayHandler(BaseHTTPRequestHandler):
         execution = body.get("execution_disposition") or {}
         native = body.get("native_result") or {}
         outcome = body.get("outcome_disposition") or {}
-        append_evidence(
-            self.config.evidence_log_path,
-            {
-                "correlation_id": body.get("correlation_id"),
-                "agent_type": (body.get("agent_identity") or {}).get("agent_type"),
-                "vertical": vertical,
-                "operation": normalized.get("operation"),
-                "observation_kind": "invoke",
-                "implementation_continuity_reference": body.get("implementation_continuity_reference"),
-                "external_identifier": native.get("external_identifier"),
-                "authorization_disposition": auth.get("state"),
-                "execution_disposition": execution.get("execution_class"),
-                "native_status": native.get("external_status"),
-                "outcome_disposition": outcome.get("disposition"),
-                "http_status": 200 if body.get("transport_status") == "ACCEPTED" else 422,
-                "transport_status": body.get("transport_status"),
-            },
-        )
+        evidence_record: dict[str, Any] = {
+            "correlation_id": body.get("correlation_id"),
+            "agent_type": (body.get("agent_identity") or {}).get("agent_type"),
+            "vertical": vertical,
+            "operation": normalized.get("operation"),
+            "observation_kind": "invoke",
+            "implementation_continuity_reference": body.get("implementation_continuity_reference"),
+            "authorization_disposition": auth.get("state"),
+            "execution_disposition": execution.get("execution_class"),
+            "native_status": native.get("external_status"),
+            "outcome_disposition": outcome.get("disposition"),
+            "http_status": 200 if body.get("transport_status") == "ACCEPTED" else 422,
+            "transport_status": body.get("transport_status"),
+        }
+        exec_class = str(execution.get("execution_class") or "").upper()
+        if vertical == "travel" and exec_class == "AUTHORIZED_NON_PRODUCTION":
+            evidence_record["external_identifier_present"] = bool(native.get("external_identifier"))
+        else:
+            evidence_record["external_identifier"] = native.get("external_identifier")
+        append_evidence(self.config.evidence_log_path, evidence_record)
         status = 200 if body.get("transport_status") == "ACCEPTED" else 422
         self._send_json(status, body)

@@ -20,7 +20,7 @@ from abis_grp_runtime.connectors.travel_stay_simulator import (  # noqa: E402
 )
 from abis_grp_runtime.e2e.service import GrokE2EService  # noqa: E402
 from abis_grp_runtime.gateway.config import GatewayConfig  # noqa: E402
-from abis_grp_runtime.gateway.preflight import PREFLIGHT_EXECUTION_DENIED, PREFLIGHT_READY  # noqa: E402
+from abis_grp_runtime.gateway.preflight import PREFLIGHT_ADAPTER_NOT_CONFIGURED, PREFLIGHT_READY  # noqa: E402
 from abis_grp_runtime.gateway.server import start_external_gateway  # noqa: E402
 from abis_grp_runtime.registry.factory import build_reference_registry  # noqa: E402
 from crs.engine import ReservationEngine  # noqa: E402
@@ -157,13 +157,13 @@ class TravelGatewayTestCase(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body["preflight_state"], PREFLIGHT_READY)
 
-    def test_preflight_denies_authorized_non_production(self) -> None:
+    def test_preflight_hbx_not_configured(self) -> None:
         status, body = self._post(
             "/v1/demo/travel/preflight",
             {"operation": "stay_reserve", "execution_class": "AUTHORIZED_NON_PRODUCTION"},
         )
         self.assertEqual(status, 200)
-        self.assertEqual(body["preflight_state"], PREFLIGHT_EXECUTION_DENIED)
+        self.assertEqual(body["preflight_state"], PREFLIGHT_ADAPTER_NOT_CONFIGURED)
 
     def test_invoke_success_not_evaluated(self) -> None:
         status, body = self._post("/v1/demo/travel/invoke", _invoke_payload())
