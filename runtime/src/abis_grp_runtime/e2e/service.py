@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from dataclasses import replace
 from typing import Any, Mapping
+from uuid import uuid4
 
+from abis_grp_runtime.adapters.errors import AdapterValidationError
 from abis_grp_runtime.agent.adapter import ExternalAgentAdapter
 from abis_grp_runtime.agent.envelope import AgentRequestEnvelope, AgentResponseEnvelope
+from abis_grp_runtime.agent.errors import AgentContractErrorCode, AgentErrorEnvelope
 from abis_grp_runtime.agent.execution_provenance import build_execution_provenance, merge_connector_provenance
 from abis_grp_runtime.connectors.authorized_http_sandbox import AuthorizedHttpSandboxConnector
 from abis_grp_runtime.connectors.authorized_mtls_sandbox import AuthorizedMtlsSandboxConnector
@@ -33,11 +36,40 @@ class GrokE2EService:
         return self._registry
 
     def invoke(self, request: AgentRequestEnvelope) -> AgentResponseEnvelope:
+        request_id = request.request_id or str(uuid4())
+        correlation_id = request.correlation_id or str(uuid4())
         vertical = str(request.metadata.get("vertical") or "").strip().lower()
         if not vertical:
             raise ValueError("vertical missing from request metadata")
         operation = request.operation.strip().lower()
         adapter = self._registry.get_adapter(vertical, operation)
+        try:
+            adapter.validate_structured_input(operation, dict(request.structured_input))
+        except AdapterValidationError as exc:
+            detail = None
+            if exc.missing or exc.fields:
+                detail = {"missing": exc.missing, "fields": list(exc.fields)}
+            return AgentResponseEnvelope(
+                request_id=request_id,
+                correlation_id=correlation_id,
+                transport_status="REJECTED",
+                agent_identity=request.identity,
+                authorization_disposition={"state": "UNKNOWN", "reason": str(exc)},
+                execution_disposition={
+                    "execution_class": request.execution_class,
+                    "policy": "DENY",
+                    "reason": str(exc),
+                },
+                native_result=None,
+                outcome_disposition=None,
+                execution_provenance=None,
+                trace_reference={"correlation_id": correlation_id, "request_id": request_id},
+                error=AgentErrorEnvelope(
+                    code=AgentContractErrorCode.INVALID_REQUEST,
+                    message=str(exc),
+                    detail=detail,
+                ),
+            )
         registered = self._registry.find(vertical, operation)
         execution_class = ExecutionClass.parse(request.execution_class)
         try:
