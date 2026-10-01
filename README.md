@@ -119,6 +119,7 @@ See [CHANGELOG.md](CHANGELOG.md) and [INTEGRATION.md](INTEGRATION.md) for integr
 - `implementation_continuity_reference` is **not** ABIS Interaction identity, Business Interaction identity, Decision identity, or Outcome identity.
 - `native_result.external_identifier` identifies an **external/native object**, not an ABIS Interaction.
 - `observe` performs **technical/native observation only** — not Business Outcome Evaluation, not Completion Determination.
+- Optional **`structured_resource_observation`** entries may appear in `trace_reference` event detail — provider-neutral resource observation evidence only. `RESOURCE_OBSERVED` / `RESOURCE_NOT_OBSERVED` do **not** imply Business Outcome success or failure; `NOT_EVALUATED` remains valid.
 - `modify` / `cancel` normative Interaction binding remains **outside v0.6**.
 
 **Unchanged limitations (still apply):** Developer Preview · not production · not real booking/payment · not ABIS certification · not conformance determination · no normative Business Outcome evaluation · **no Internet-wide business discovery** · **REAL_EXECUTION PROHIBITED** · Native Result ≠ Business Outcome (`NOT_EVALUATED`).

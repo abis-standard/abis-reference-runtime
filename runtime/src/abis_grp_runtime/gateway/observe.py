@@ -10,7 +10,15 @@ from abis_grp_runtime.agent.continuity_reference import ICR_FIELD_NAME, validate
 from abis_grp_runtime.agent.envelope import AgentIdentity, AgentResponseEnvelope
 from abis_grp_runtime.agent.execution_provenance import build_execution_provenance
 from abis_grp_runtime.authorization import AuthorizationInput, evaluate_authorization
-from abis_grp_runtime.evidence import FoundationTrace
+from abis_grp_runtime.evidence import (
+    FoundationTrace,
+    OBSERVATION_CAUSE_UNKNOWN,
+    OBSERVATION_RESULT_NOT_OBSERVED,
+    OBSERVATION_RESULT_OBSERVED,
+    OBSERVATION_RESULT_UNKNOWN,
+    OBSERVATION_SOURCE_NATIVE_OBSERVATION,
+    StructuredResourceObservation,
+)
 from abis_grp_runtime.execution import ExecutionClass, resolve_execution_disposition
 from abis_grp_runtime.gateway.errors import GatewayError, GatewayErrorCode
 from abis_grp_runtime.native_result import NativeResultEnvelope
@@ -29,6 +37,44 @@ ALLOWED_OBSERVE_KEYS = frozenset(
 )
 
 URL_PATTERN = re.compile(r"(?i)(https?://|file://|ftp://|\\\\)")
+
+
+def _structured_observation_from_observe_native(
+    native: NativeResultEnvelope,
+    *,
+    external_identifier: str,
+) -> StructuredResourceObservation | None:
+    """Map supported Observe native results to optional structured resource-observation evidence."""
+    subject_ref = external_identifier.strip()
+    if not subject_ref:
+        return None
+    crs = native.payload.get("crs_native_result")
+    if not isinstance(crs, dict):
+        return StructuredResourceObservation(
+            subject_ref=subject_ref,
+            observation_source=OBSERVATION_SOURCE_NATIVE_OBSERVATION,
+            observation_result=OBSERVATION_RESULT_UNKNOWN,
+        )
+    if crs.get("error") == "NOT_FOUND":
+        return StructuredResourceObservation(
+            subject_ref=subject_ref,
+            observation_source=OBSERVATION_SOURCE_NATIVE_OBSERVATION,
+            observation_result=OBSERVATION_RESULT_NOT_OBSERVED,
+            observation_cause=OBSERVATION_CAUSE_UNKNOWN,
+        )
+    if native.technical_status == "TRANSPORT_OK":
+        state = crs.get("status")
+        return StructuredResourceObservation(
+            subject_ref=subject_ref,
+            observation_source=OBSERVATION_SOURCE_NATIVE_OBSERVATION,
+            observation_result=OBSERVATION_RESULT_OBSERVED,
+            observed_provider_state=str(state) if state is not None else None,
+        )
+    return StructuredResourceObservation(
+        subject_ref=subject_ref,
+        observation_source=OBSERVATION_SOURCE_NATIVE_OBSERVATION,
+        observation_result=OBSERVATION_RESULT_UNKNOWN,
+    )
 
 
 def _native_result_to_dict(result: NativeResultEnvelope | None) -> dict[str, Any] | None:
@@ -163,6 +209,9 @@ def execute_observe(
         {"external_identifier": external_identifier},
     )
     trace.record("native_observation", "COMPLETE", external_status=native.external_status)
+    observation = _structured_observation_from_observe_native(native, external_identifier=external_identifier)
+    if observation is not None:
+        trace.record_structured_resource_observation(observation)
 
     semantic_placeholder = SemanticBoundaryInput(
         participant_ref=SemanticReference("implementation_participant", f"observe-participant-{correlation_id}"),

@@ -9,7 +9,7 @@ from abis_grp_runtime.authorization import AuthorizationDisposition, Authorizati
 from abis_grp_runtime.connector import BusinessConnectorPort, FixtureConnector, NullConnector
 from abis_grp_runtime.context import RuntimeRequestContext
 from abis_grp_runtime.control_plane import control_plane_allows
-from abis_grp_runtime.evidence import FoundationTrace
+from abis_grp_runtime.evidence import FoundationTrace, emit_structured_resource_observations_from_native_payload
 from abis_grp_runtime.execution import ExecutionClass, ExecutionDisposition, resolve_execution_disposition
 from abis_grp_runtime.native_result import NativeResultEnvelope
 from abis_grp_runtime.outcome import NullOutcomeInterpreter, OutcomeInterpretationDisposition, OutcomeInterpreterPort
@@ -159,6 +159,7 @@ class RuntimeCore:
             external_status=native_result.external_status,
             source=native_result.source,
         )
+        emit_structured_resource_observations_from_native_payload(trace, native_result.payload)
 
         outcome = self._outcome_interpreter.interpret(semantic_input, native_result)
         trace.record("outcome_interpreter", outcome.disposition, reason=outcome.reason)
