@@ -319,6 +319,21 @@ Quick Validation can produce useful evidence even when your environment cannot e
 | Submit Validation Report | [Open Issue — Validation Report](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-report.yml) |
 | Report problem / ambiguity | [Open Issue — Validation Problem](https://github.com/abis-standard/abis-reference-runtime/issues/new?template=validation-problem.yml) |
 
+### Validation / R&D evidence (separate from this Runtime)
+
+The Reference Runtime is a **developer-facing reference implementation**. Claims established through ABIS **validation and R&D evidence** are documented separately and do **not** mean this repository automatically executes or certifies those research scenarios.
+
+Controlled **L2** research has established, within sandbox/test-mode scope:
+
+- **Multi-provider reproducibility** across validated provider/domain surfaces.
+- **Cross-provider Multi-Outcome** evaluation under one predeclared higher-level objective, demonstrated using **Duffel Test Mode** and **Square Sandbox** (provider surfaces in a controlled experiment — not provider endorsement).
+
+Observed composite cases included: MATCH + MATCH → satisfied; MATCH + MISMATCH → not satisfied (including cases where provider-side execution succeeded but the composite business outcome did not); MATCH + NOT_EVALUATED → not evaluable.
+
+**Scope boundary:** L2 sandbox/provider-backed only — not production validation, not L3, not certification, not conformance determination, not universal provider compatibility.
+
+**Authoritative public summary:** [Cross-Provider Multi-Outcome L2 evidence](https://github.com/abis-standard/abis/blob/main/validation/evidence/CROSS-PROVIDER-MULTI-OUTCOME-L2.md) (abis-spec-public). General validation context: [abis.coaretail.com/ja/validation](https://abis.coaretail.com/ja/validation).
+
 ---
 
 ## Quick Start
