@@ -22,6 +22,8 @@ Business Outcome disposition: NOT_EVALUATED
 
 Native Result ≠ Business Outcome. A native `CONFIRMED` or `SUCCESS` observation is not proof that the user's intended outcome occurred.
 
+**ABIS — Agent Business Interaction Standard.** This repository is a Developer Preview reference implementation, not the ABIS specification. ABIS concepts and the normative candidate are published in [abis-standard/abis](https://github.com/abis-standard/abis), and Runtime-reported versions are not ABIS semantic authority. **Execution Success ≠ Outcome Success:** an HTTP 200 or a native `CONFIRMED` is not a satisfied Business Outcome. This Runtime does **not** perform normative ABIS Business Outcome evaluation and provides no outcome verification; its per-Invoke disposition is `NOT_EVALUATED`. ABIS is not an agent orchestration or model-routing system and does not replace protocols such as MCP or A2A. They are named here for comparison only, which implies no integration, certification, or endorsement. AI coding assistants: see [.github/copilot-instructions.md](.github/copilot-instructions.md) for repository-scoped guidance.
+
 ---
 
 ## Start here
